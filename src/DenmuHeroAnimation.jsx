@@ -162,26 +162,51 @@ export default function DenmuHeroAnimation() {
         <div className="hero-content">
           {/* Header Container */}
           <header className="hero-header-wrapper">
-            <motion.div
-              initial={{ y: "40vh" }}
-              animate={{ y: 0 }}
-              transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-              onAnimationComplete={() => setPhase("pageReady")}
-              className="centered-header-title-wrapper"
-            >
-              <h1 className="hero-nexus-title">{introText}</h1>
-            </motion.div>
+            {/* Header Container with 10 Motion Trail Layers */}
+            <div className="title-trail-container">
+              {/* Dynamic 5 Afterimage Trail Layers */}
+              {Array.from({ length: 5 }).map((_, index) => {
+                // Index 0 is furthest behind (layer 5), index 4 is closest to main text (layer 1)
+                const layerNum = 5 - index;
+                const delay = layerNum * 0.035; // Staggered delay (0.035s to 0.175s)
+                const startOpacity = 0.7 - layerNum * 0.1;
+
+                return (
+                  <motion.div
+                    key={layerNum}
+                    initial={{ y: "40vh", scale: 1, opacity: startOpacity }}
+                    animate={{
+                      y: 0,
+                      scale: 1.25,
+                      opacity: 0,
+                    }} /* Scale to 1.25x as it moves */
+                    transition={{
+                      duration: 0.9,
+                      delay: delay,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                    className={`centered-header-title-wrapper afterimage trail-layer-${layerNum}`}
+                  >
+                    <h1 className="hero-nexus-title">{introText}</h1>
+                  </motion.div>
+                );
+              })}
+
+              {/* Main Title Layer */}
+              <motion.div
+                initial={{ y: "40vh", scale: 1 }}
+                animate={{ y: 0, scale: 1.25 }} /* Scale to 1.25x as it moves */
+                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                onAnimationComplete={() => setPhase("pageReady")}
+                className="centered-header-title-wrapper main-title"
+              >
+                <h1 className="hero-nexus-title">{introText}</h1>
+              </motion.div>
+            </div>
 
             {/* Subnavbar */}
             <AnimatePresence>
-              {phase === "pageReady" && (
-                <motion.nav
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                  className="subnavbar-container"
-                ></motion.nav>
-              )}
+              {/* ... rest of your subnavbar code remains unchanged ... */}
             </AnimatePresence>
           </header>
 

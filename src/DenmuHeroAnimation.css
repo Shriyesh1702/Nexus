@@ -17,6 +17,7 @@ body {
   background-color: #000000;
   overflow-x: hidden;
   width: 100%;
+  font-size: 150%;
 }
 
 /* Container */
@@ -167,6 +168,40 @@ body {
   margin-top: 0;
 }
 
+.title-trail-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.afterimage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+/* Deepest trailing layers (8-10): Soft purple blur */
+.trail-layer-5 .hero-nexus-title,
+.trail-layer-4 .hero-nexus-title {
+  color: #8a2be2;
+  filter: blur(2px);
+}
+
+/* Mid trailing layers (2 & 3): Soft violet tint */
+.trail-layer-3 .hero-nexus-title,
+.trail-layer-2 .hero-nexus-title {
+  color: #a770ef;
+  filter: blur(1px);
+}
+
+/* Leading trailing layer (1): Crisp white ghost */
+.trail-layer-1 .hero-nexus-title {
+  color: #ffffff;
+  filter: blur(0.5px);
+}
+
 .centered-header-title-wrapper {
   width: 100%;
   text-align: center;
@@ -219,6 +254,11 @@ body {
   font-weight: 800;
   letter-spacing: -0.04em;
   margin-bottom: 1rem;
+}
+
+.main-title {
+  position: relative;
+  z-index: 7;
 }
 
 .purple-accent {
