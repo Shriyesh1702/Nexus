@@ -232,11 +232,7 @@ export default function DenmuHeroAnimation() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="page-center-body"
             >
-              <h2 className="main-page-title">WELCOME TO ARENA</h2>
-
-              <div className="hero-footer">
-                <button className="hero-button">ENTER ARENA</button>
-              </div>
+              <h2 className="main-page-title">WELCOME TO THE ARENA</h2>
             </motion.div>
           )}
         </div>

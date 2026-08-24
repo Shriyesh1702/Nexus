@@ -220,7 +220,7 @@ body {
   align-items: center;
   text-align: center;
   gap: 1.25rem;
-  margin-top: auto;
+  margin-top: 15vh;
   margin-bottom: auto;
   pointer-events: auto;
 }
@@ -228,9 +228,10 @@ body {
 .main-page-title {
   font-size: clamp(2rem, 5vw, 4rem);
   letter-spacing: 0.05em;
-  font-weight: 700;
+  font-weight: 500;
   text-transform: uppercase;
   margin: 0;
+  font-family: sans-serif;
 }
 
 .main-page-sub {
