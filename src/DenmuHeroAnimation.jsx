@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect, useRef } from "react";
+import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
+import Lenis from "@studio-freight/lenis";
 import Hyperspeed from "./Hyperspeed";
 import "./DenmuHeroAnimation.css";
 
-// Customized Hyperspeed settings to match the Purple/Cyan Arena Theme
 const hyperspeedOptions = {
   distortion: "turbulentDistortion",
   length: 400,
@@ -32,11 +32,11 @@ const hyperspeedOptions = {
     roadColor: 0x05020a,
     islandColor: 0x0a0312,
     background: 0x000000,
-    shoulderLines: 0xff007f, // Neon Pink
-    brokenLines: 0xbf00ff, // Electric Purple
-    leftCars: [0xff007f, 0xff1493, 0xff69b4], // Pink / Hot Pink Spectrum
-    rightCars: [0xbf00ff, 0x8a2be2, 0xda70d6], // Purple / Violet Spectrum
-    sticks: 0xff007f, // Pink Side Light Sticks
+    shoulderLines: 0xff007f,
+    brokenLines: 0xbf00ff,
+    leftCars: [0xff007f, 0xff1493, 0xff69b4],
+    rightCars: [0xbf00ff, 0x8a2be2, 0xda70d6],
+    sticks: 0xff007f,
   },
 };
 
@@ -44,18 +44,152 @@ export default function DenmuHeroAnimation() {
   const [isFontLoaded, setIsFontLoaded] = useState(false);
   const [phase, setPhase] = useState("entrance"); // entrance -> grid -> loading -> headerMove -> pageReady
   const [loadProgress, setLoadProgress] = useState(0);
+  const [portalCoords, setPortalCoords] = useState({ x: 50, y: 50 });
+
+  const portalOriginRef = useRef(null);
+  const lenisRef = useRef(null);
 
   const introText = "NEXUS";
   const letters = Array.from(introText);
 
   const directions = [
-    { x: 0, y: -100 },
-    { x: 0, y: 100 },
-    { x: -100, y: 0 },
-    { x: 100, y: 0 },
+    { x: 0, y: -120 },
+    { x: 0, y: 120 },
+    { x: -120, y: 0 },
+    { x: 120, y: 0 },
   ];
 
-  // Font Readiness Check
+  // 1. Raw Scroll MotionValue
+  const rawScrollProgress = useMotionValue(0);
+
+  // 2. Extra Frame Interpolation via Smooth Spring Physics
+  // Low mass + tuned damping adds high-frequency intermediate frames for high-refresh screens
+  const scrollProgress = useSpring(rawScrollProgress, {
+    stiffness: 80,
+    damping: 18,
+    restDelta: 0.0001,
+  });
+
+  // Multi-step transforms for dynamic keyframe density
+  const portalRadius = useTransform(
+    scrollProgress,
+    [0, 0.15, 0.5, 0.85, 1],
+    ["0%", "15%", "65%", "120%", "170%"],
+  );
+
+  const portalScale = useTransform(
+    scrollProgress,
+    [0, 0.2, 0.8, 1],
+    [0.8, 0.88, 0.96, 1],
+  );
+
+  const portalOpacity = useTransform(
+    scrollProgress,
+    [0, 0.02, 0.08, 1],
+    [0, 0.6, 1, 1],
+  );
+
+  const clipPathStyle = useTransform(
+    portalRadius,
+    (r) => `circle(${r} at ${portalCoords.x}% ${portalCoords.y}%)`,
+  );
+
+  // 3. Lenis Driven Frame Wheel Capture
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    if (phase !== "pageReady") return;
+
+    const lenis = new Lenis({
+      duration: 1.4,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+    });
+
+    lenisRef.current = lenis;
+
+    let progressVal = 0;
+
+    const handleWheel = (e) => {
+      e.preventDefault();
+      // Sensitivity: smaller divisor = longer animation timeline & more sub-frames
+      const delta = e.deltaY;
+      progressVal += delta / 1800;
+      progressVal = Math.max(0, Math.min(1, progressVal));
+      rawScrollProgress.set(progressVal);
+    };
+
+    let startY = 0;
+    const handleTouchStart = (e) => {
+      startY = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e) => {
+      const currentY = e.touches[0].clientY;
+      const deltaY = startY - currentY;
+      startY = currentY;
+
+      progressVal += deltaY / 1000;
+      progressVal = Math.max(0, Math.min(1, progressVal));
+      rawScrollProgress.set(progressVal);
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    const rafId = requestAnimationFrame(raf);
+
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      cancelAnimationFrame(rafId);
+      lenis.destroy();
+      lenisRef.current = null;
+    };
+  }, [phase, rawScrollProgress]);
+
+  // Coordinate positioning measurement
+  const updatePortalOrigin = () => {
+    if (portalOriginRef.current) {
+      const rect = portalOriginRef.current.getBoundingClientRect();
+
+      // Calculates horizontal center (% of viewport width)
+      const centerX = rect.left + rect.width / 2;
+      // Calculates vertical center (% of viewport height)
+      const centerY = rect.top + rect.height / 2;
+
+      const x = (centerX / window.innerWidth) * 100;
+      const y = (centerY / window.innerHeight) * 100;
+      const X_OFFSET = -1.2; // Adjust negative value to nudge the origin further left
+
+      setPortalCoords({
+        x: x + X_OFFSET,
+        y,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (phase === "pageReady") {
+      const timeout = setTimeout(() => {
+        updatePortalOrigin();
+      }, 50);
+
+      window.addEventListener("resize", updatePortalOrigin);
+      return () => {
+        clearTimeout(timeout);
+        window.removeEventListener("resize", updatePortalOrigin);
+      };
+    }
+  }, [phase]);
+
   useEffect(() => {
     if (document.fonts) {
       document.fonts.ready.then(() => setIsFontLoaded(true));
@@ -64,44 +198,45 @@ export default function DenmuHeroAnimation() {
     }
   }, []);
 
+  // Dense staggered letter entrance
   const textContainerVariants = {
     hidden: {},
-    visible: { transition: { staggerChildren: 0.1 } },
+    visible: { transition: { staggerChildren: 0.08 } },
   };
 
   const getLetterVariant = (index) => {
     const dir = directions[index % directions.length];
     return {
-      hidden: { x: dir.x, y: dir.y, opacity: 0 },
+      hidden: { x: dir.x, y: dir.y, opacity: 0, scale: 0.8 },
       visible: {
         x: 0,
         y: 0,
         opacity: 1,
-        transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
+        scale: 1,
+        transition: { duration: 0.85, ease: [0.16, 1, 0.3, 1] },
       },
     };
   };
 
-  // Intro text flicker handler
   const handleLetterRevealComplete = async () => {
     const textElement = document.getElementById("intro-text-wrapper");
     if (!textElement) return;
 
     await textElement.animate(
       [
-        { opacity: 1 },
-        { opacity: 0 },
-        { opacity: 1 },
-        { opacity: 0 },
-        { opacity: 1 },
+        { opacity: 1, filter: "blur(0px)" },
+        { opacity: 0.2, filter: "blur(4px)" },
+        { opacity: 1, filter: "blur(0px)" },
+        { opacity: 0.1, filter: "blur(6px)" },
+        { opacity: 1, filter: "blur(0px)" },
       ],
-      { duration: 500, iterations: 1, easing: "ease-in-out" },
+      { duration: 600, iterations: 1, easing: "ease-in-out" },
     ).finished;
 
     setPhase("grid");
   };
 
-  // Progress loader ticker
+  // Intermediate loader ticks for granular progress
   useEffect(() => {
     if (phase === "loading") {
       const interval = setInterval(() => {
@@ -111,9 +246,9 @@ export default function DenmuHeroAnimation() {
             setTimeout(() => setPhase("headerMove"), 300);
             return 100;
           }
-          return prev + 4;
+          return prev + 2; // Increments by 2% instead of 4% to add more step frames
         });
-      }, 25);
+      }, 16); // 16ms tick (~60fps progress update)
 
       return () => clearInterval(interval);
     }
@@ -129,148 +264,177 @@ export default function DenmuHeroAnimation() {
   }
 
   return (
-    <div className="denmu-hero-container">
-      {/* FULL-SCREEN HYPERSPEED BACKGROUND */}
-      {phase === "pageReady" && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-          className="fullscreen-hyperspeed-bg"
-        >
-          <Hyperspeed effectOptions={hyperspeedOptions} />
-        </motion.div>
-      )}
-
-      {/* 1. VERTICAL WHITE GRID LINES */}
-      <div className="gridlines-container">
-        {[0, 1, 2, 3].map((i) => (
+    <div className="denmu-scroll-wrapper">
+      <div className="denmu-hero-container">
+        {/* Fullscreen Canvas */}
+        {phase === "pageReady" && (
           <motion.div
-            key={i}
-            initial={{ scaleY: 0, opacity: 1 }}
-            animate={{
-              scaleY:
-                phase === "entrance"
-                  ? 0
-                  : phase === "grid" || phase === "loading"
-                    ? 1
-                    : 0,
-              opacity: phase === "headerMove" || phase === "pageReady" ? 0 : 1,
-            }}
-            transition={{
-              duration: 0.6,
-              delay: phase === "entrance" || phase === "grid" ? i * 0.1 : 0,
-              ease: [0.16, 1, 0.3, 1],
-            }}
-            onAnimationComplete={() => {
-              if (i === 3 && phase === "grid") setPhase("loading");
-            }}
-            className="gridline"
-          />
-        ))}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.4, ease: "easeOut" }}
+            className="fullscreen-hyperspeed-bg"
+          >
+            <Hyperspeed effectOptions={hyperspeedOptions} />
+          </motion.div>
+        )}
+
+        {/* 6 Gridlines for more dense frame structure */}
+        <div className="gridlines-container">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <motion.div
+              key={i}
+              initial={{ scaleY: 0, opacity: 1 }}
+              animate={{
+                scaleY:
+                  phase === "entrance"
+                    ? 0
+                    : phase === "grid" || phase === "loading"
+                      ? 1
+                      : 0,
+                opacity:
+                  phase === "headerMove" || phase === "pageReady" ? 0 : 1,
+              }}
+              transition={{
+                duration: 0.75,
+                delay: phase === "entrance" || phase === "grid" ? i * 0.08 : 0,
+                ease: [0.16, 1, 0.3, 1],
+              }}
+              onAnimationComplete={() => {
+                if (i === 5 && phase === "grid") setPhase("loading");
+              }}
+              className="gridline"
+            />
+          ))}
+        </div>
+
+        {/* Intro Loading Sequence */}
+        {(phase === "entrance" || phase === "grid" || phase === "loading") && (
+          <div className="intro-screen">
+            <motion.div
+              id="intro-text-wrapper"
+              variants={textContainerVariants}
+              initial="hidden"
+              animate="visible"
+              onAnimationComplete={handleLetterRevealComplete}
+              className="intro-text-wrapper"
+            >
+              {letters.map((char, index) => (
+                <div key={index} className="letter-mask-container">
+                  <motion.h1
+                    variants={getLetterVariant(index)}
+                    className="hero-nexus-title"
+                  >
+                    {char}
+                  </motion.h1>
+                </div>
+              ))}
+            </motion.div>
+
+            {phase === "loading" && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="bottom-loader-container"
+              >
+                <div className="bottom-loader-info">
+                  <span>INITIALIZING GAMING ARENA</span>
+                  <span>{loadProgress}%</span>
+                </div>
+                <div className="bottom-loader-track">
+                  <motion.div
+                    className="bottom-loader-fill"
+                    style={{ scaleX: loadProgress / 100 }}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </div>
+        )}
+
+        {/* Dense Motion Blur Header Trails (8 sub-layers) */}
+        {(phase === "headerMove" || phase === "pageReady") && (
+          <div className="hero-content">
+            <header className="hero-header-wrapper">
+              <div className="title-trail-container">
+                {Array.from({ length: 8 }).map((_, index) => {
+                  const layerNum = 8 - index;
+                  const delay = layerNum * 0.025;
+                  const startOpacity = 0.8 - layerNum * 0.08;
+
+                  return (
+                    <motion.div
+                      key={layerNum}
+                      initial={{ y: "45vh", scale: 0.9, opacity: startOpacity }}
+                      animate={{ y: 0, scale: 1.25, opacity: 0 }}
+                      transition={{
+                        duration: 1.05,
+                        delay: delay,
+                        ease: [0.16, 1, 0.3, 1],
+                      }}
+                      className={`centered-header-title-wrapper afterimage trail-layer-${layerNum}`}
+                    >
+                      <h1 className="hero-nexus-title">{introText}</h1>
+                    </motion.div>
+                  );
+                })}
+
+                <motion.div
+                  initial={{ y: "45vh", scale: 0.9 }}
+                  animate={{ y: 0, scale: 1.25 }}
+                  transition={{ duration: 1.05, ease: [0.16, 1, 0.3, 1] }}
+                  onAnimationComplete={() => setPhase("pageReady")}
+                  className="centered-header-title-wrapper main-title"
+                >
+                  <h1 className="hero-nexus-title">{introText}</h1>
+                </motion.div>
+              </div>
+            </header>
+
+            {phase === "pageReady" && (
+              <motion.div
+                initial={{ opacity: 0, y: 25 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.9, delay: 0.15 }}
+                className="page-center-body"
+              >
+                <h2 className="main-page-title">
+                  WELC
+                  <span className="portal-letter-o" ref={portalOriginRef}>
+                    O
+                  </span>
+                  ME TO <span className="purple-accent">ARENA</span>
+                </h2>
+                <span className="scroll-hint">SCROLL TO EXPAND PORTAL</span>
+              </motion.div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* 2. INITIAL LOADING SCREEN PHASE */}
-      {(phase === "entrance" || phase === "grid" || phase === "loading") && (
-        <div className="intro-screen">
-          <motion.div
-            id="intro-text-wrapper"
-            variants={textContainerVariants}
-            initial="hidden"
-            animate="visible"
-            onAnimationComplete={handleLetterRevealComplete}
-            className="intro-text-wrapper"
-          >
-            {letters.map((char, index) => (
-              <div key={index} className="letter-mask-container">
-                <motion.h1
-                  variants={getLetterVariant(index)}
-                  className="hero-nexus-title"
-                >
-                  {char}
-                </motion.h1>
-              </div>
-            ))}
-          </motion.div>
-
-          {/* Bottom Progress Loader */}
-          {phase === "loading" && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="bottom-loader-container"
-            >
-              <div className="bottom-loader-info">
-                <span>INITIALIZING GAMING ARENA</span>
-                <span>{loadProgress}%</span>
-              </div>
-              <div className="bottom-loader-track">
-                <motion.div
-                  className="bottom-loader-fill"
-                  style={{ scaleX: loadProgress / 100 }}
-                />
-              </div>
-            </motion.div>
-          )}
-        </div>
-      )}
-
-      {/* 3. MAIN PAGE LAYOUT PHASE */}
-      {(phase === "headerMove" || phase === "pageReady") && (
-        <div className="hero-content">
-          {/* Header Block with Motion Trails */}
-          <header className="hero-header-wrapper">
-            <div className="title-trail-container">
-              {Array.from({ length: 5 }).map((_, index) => {
-                const layerNum = 5 - index;
-                const delay = layerNum * 0.035;
-                const startOpacity = 0.7 - layerNum * 0.1;
-
-                return (
-                  <motion.div
-                    key={layerNum}
-                    initial={{ y: "40vh", scale: 1, opacity: startOpacity }}
-                    animate={{ y: 0, scale: 1.25, opacity: 0 }}
-                    transition={{
-                      duration: 0.9,
-                      delay: delay,
-                      ease: [0.16, 1, 0.3, 1],
-                    }}
-                    className={`centered-header-title-wrapper afterimage trail-layer-${layerNum}`}
-                  >
-                    <h1 className="hero-nexus-title">{introText}</h1>
-                  </motion.div>
-                );
-              })}
-
-              {/* Main Title Layer */}
-              <motion.div
-                initial={{ y: "40vh", scale: 1 }}
-                animate={{ y: 0, scale: 1.25 }}
-                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-                onAnimationComplete={() => setPhase("pageReady")}
-                className="centered-header-title-wrapper main-title"
-              >
-                <h1 className="hero-nexus-title">{introText}</h1>
-              </motion.div>
+      {/* Portal Overlay */}
+      {phase === "pageReady" && (
+        <motion.div
+          className="portal-overlay-container"
+          style={{
+            clipPath: clipPathStyle,
+            scale: portalScale,
+            opacity: portalOpacity,
+          }}
+        >
+          <div className="inverted-theme-wrapper">
+            <div className="next-page-layout">
+              <section className="next-page-hero">
+                <h1 className="next-page-title">NEXT PAGE CONTENT</h1>
+                <p className="next-page-description">
+                  You scrolled through the portal into the inverted theme
+                  section.
+                </p>
+                <button className="inverted-btn">EXPLORE ARENA</button>
+              </section>
             </div>
-          </header>
-
-          {/* Center Content Section */}
-          {phase === "pageReady" && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="page-center-body"
-            >
-              <h2 className="main-page-title">
-                WELCOME TO <span className="purple-accent">ARENA</span>
-              </h2>
-            </motion.div>
-          )}
-        </div>
+          </div>
+        </motion.div>
       )}
     </div>
   );
