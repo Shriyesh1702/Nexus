@@ -324,12 +324,10 @@ body {
 ========================================== */
 .portal-overlay-container {
   position: fixed;
-  /* Expands the container bounds past screen edges to remove fringing/borders */
   top: -5vh;
   left: -5vw;
   width: 110vw;
   height: 110vh;
-  z-index: 100;
   pointer-events: none;
   border: none;
   outline: none;
@@ -340,13 +338,7 @@ body {
 .inverted-theme-wrapper {
   width: 100%;
   height: 100%;
-  background-color: #ffffff;
-  color: #000000;
-  filter: invert(1) hue-rotate(180deg);
   pointer-events: auto;
-  border: none;
-  outline: none;
-  box-shadow: none;
 }
 
 .next-page-layout {
@@ -405,6 +397,81 @@ body {
 }
 
 /* Layer index for Portal 3 */
-.portal-layer-3 {
-  z-index: 102;
+.inverted-theme-wrapper.mode-light .next-page-layout {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.inverted-theme-wrapper.mode-light .inverted-btn {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+/* PORTAL 2 DARK NEON STYLING */
+.inverted-theme-wrapper.mode-dark .next-page-layout {
+  background-color: #05020a;
+  color: #bf00ff;
+}
+.inverted-theme-wrapper.mode-dark .next-page-title {
+  color: #ff007f;
+  text-shadow: 0 0 15px rgba(255, 0, 127, 0.6);
+}
+
+.inverted-theme-wrapper.mode-dark .next-page-description {
+  color: #e0b0ff;
+}
+
+.inverted-theme-wrapper.mode-dark .inverted-btn {
+  background-color: #bf00ff;
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(191, 0, 255, 0.5);
+}
+
+.next-page-layout {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.next-page-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+}
+
+.next-page-title {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  letter-spacing: 0.1em;
+  margin-bottom: 1rem;
+  font-family: "MyCustomFont", sans-serif;
+}
+
+.next-page-description {
+  max-width: 500px;
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin-bottom: 2rem;
+  font-family: sans-serif;
+  line-height: 1.6;
+}
+
+.inverted-btn {
+  border: none;
+  padding: 1rem 2.5rem;
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 4px;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.inverted-btn:hover {
+  transform: scale(1.05);
 }

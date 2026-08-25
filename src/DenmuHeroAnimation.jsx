@@ -71,63 +71,34 @@ export default function DenmuHeroAnimation() {
 
   // 2. Secondary Portal Spring (Second Wave)
   const scrollProgress2 = useSpring(rawScrollProgress, {
-    stiffness: 55,
+    stiffness: 60,
     damping: 20,
     restDelta: 0.0001,
   });
 
-  // 3. Tertiary Portal Spring (Third Wave)
-  const scrollProgress3 = useSpring(rawScrollProgress, {
-    stiffness: 40,
-    damping: 22,
-    restDelta: 0.0001,
-  });
-
-  // --- PORTAL 1 TRANSFORMS (Light Theme) ---
+  // --- PORTAL 1 TRANSFORMS (0% to 50% scroll) ---
+  // --- PORTAL 1 TRANSFORMS (Scroll: 0.0 -> 0.60) ---
   const portal1Radius = useTransform(
     scrollProgress1,
-    [0, 0.15, 0.5, 0.85, 1],
-    ["0%", "20%", "75%", "130%", "180%"],
+    [0, 0.5, 0.6],
+    ["0%", "120%", "200%"],
   );
-  const portal1Opacity = useTransform(
-    scrollProgress1,
-    [0, 0.02, 0.08, 1],
-    [0, 0.6, 1, 1],
-  );
+  const portal1Opacity = useTransform(scrollProgress1, [0, 0.03], [0, 1]);
   const clipPathStyle1 = useTransform(
     portal1Radius,
     (r) => `circle(${r} at ${portalCoords.x}% ${portalCoords.y}%)`,
   );
 
-  // --- PORTAL 2 TRANSFORMS (Dark Theme) ---
+  // --- PORTAL 2 TRANSFORMS (Scroll: 0.20 -> 0.85) ---
+  // Starts at 0.20 while Portal 1 is still growing!
   const portal2Radius = useTransform(
     scrollProgress2,
-    [0.15, 0.35, 0.7, 0.95, 1],
-    ["0%", "15%", "65%", "130%", "180%"],
+    [0.2, 0.7, 0.85],
+    ["0%", "120%", "200%"],
   );
-  const portal2Opacity = useTransform(
-    scrollProgress2,
-    [0.15, 0.18, 0.25, 1],
-    [0, 0.6, 1, 1],
-  );
+  const portal2Opacity = useTransform(scrollProgress2, [0.2, 0.25], [0, 1]);
   const clipPathStyle2 = useTransform(
     portal2Radius,
-    (r) => `circle(${r} at ${portalCoords.x}% ${portalCoords.y}%)`,
-  );
-
-  // --- PORTAL 3 TRANSFORMS (Reversed Light Theme) ---
-  const portal3Radius = useTransform(
-    scrollProgress3,
-    [0.35, 0.55, 0.8, 0.98, 1],
-    ["0%", "15%", "65%", "130%", "180%"],
-  );
-  const portal3Opacity = useTransform(
-    scrollProgress3,
-    [0.35, 0.38, 0.45, 1],
-    [0, 0.6, 1, 1],
-  );
-  const clipPathStyle3 = useTransform(
-    portal3Radius,
     (r) => `circle(${r} at ${portalCoords.x}% ${portalCoords.y}%)`,
   );
 
@@ -151,7 +122,7 @@ export default function DenmuHeroAnimation() {
     const handleWheel = (e) => {
       e.preventDefault();
       const delta = e.deltaY;
-      progressVal += delta / 2600; // Adjusted timeline length for 3 distinct waves
+      progressVal += delta / 1800; // Tighter sensitivity calibrated for 2 waves
       progressVal = Math.max(0, Math.min(1, progressVal));
       rawScrollProgress.set(progressVal);
     };
@@ -166,7 +137,7 @@ export default function DenmuHeroAnimation() {
       const deltaY = startY - currentY;
       startY = currentY;
 
-      progressVal += deltaY / 1400;
+      progressVal += deltaY / 1000;
       progressVal = Math.max(0, Math.min(1, progressVal));
       rawScrollProgress.set(progressVal);
     };
@@ -433,13 +404,16 @@ export default function DenmuHeroAnimation() {
                   </span>
                   ME TO <span className="purple-accent">ARENA</span>
                 </h2>
+                <span className="scroll-hint">
+                  SCROLL TO TRIGGER RIPPLE PORTAL
+                </span>
               </motion.div>
             )}
           </div>
         )}
       </div>
 
-      {/* PORTAL 1: Light Mode */}
+      {/* PORTAL 1: Light Theme (First Expansion) */}
       {phase === "pageReady" && (
         <motion.div
           className="portal-overlay-container portal-layer-1"
@@ -451,19 +425,15 @@ export default function DenmuHeroAnimation() {
           <div className="inverted-theme-wrapper mode-light">
             <div className="next-page-layout">
               <section className="next-page-hero">
-                <h1 className="next-page-title">NEXT PAGE CONTENT</h1>
-                <p className="next-page-description">
-                  You scrolled through the portal into the inverted theme
-                  section.
-                </p>
-                <button className="inverted-btn">EXPLORE ARENA</button>
+                <h1 className="next-page-title">NEXUS KILUB</h1>
+                <p className="next-page-description">hehe.</p>
               </section>
             </div>
           </div>
         </motion.div>
       )}
 
-      {/* PORTAL 2: Dark Mode */}
+      {/* PORTAL 2: Dark Neon Theme (Second Expansion) */}
       {phase === "pageReady" && (
         <motion.div
           className="portal-overlay-container portal-layer-2"
@@ -475,36 +445,8 @@ export default function DenmuHeroAnimation() {
           <div className="inverted-theme-wrapper mode-dark">
             <div className="next-page-layout">
               <section className="next-page-hero">
-                <h1 className="next-page-title">NEXT PAGE CONTENT</h1>
-                <p className="next-page-description">
-                  You scrolled through the portal into the inverted theme
-                  section.
-                </p>
-                <button className="inverted-btn">EXPLORE ARENA</button>
-              </section>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* PORTAL 3: Reversed Light Mode (Identical Text, Inverted Colors) */}
-      {phase === "pageReady" && (
-        <motion.div
-          className="portal-overlay-container portal-layer-3"
-          style={{
-            clipPath: clipPathStyle3,
-            opacity: portal3Opacity,
-          }}
-        >
-          <div className="inverted-theme-wrapper mode-light">
-            <div className="next-page-layout">
-              <section className="next-page-hero">
-                <h1 className="next-page-title">NEXT PAGE CONTENT</h1>
-                <p className="next-page-description">
-                  You scrolled through the portal into the inverted theme
-                  section.
-                </p>
-                <button className="inverted-btn">EXPLORE ARENA</button>
+                <h1 className="next-page-title">NEXUS KILUB</h1>
+                <p className="next-page-description">hehe</p>
               </section>
             </div>
           </div>
