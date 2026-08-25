@@ -1,9 +1,47 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import FaultyTerminal from "./FaultyTerminal";
+import Hyperspeed from "./Hyperspeed";
 import "./DenmuHeroAnimation.css";
 
+// Customized Hyperspeed settings to match the Purple/Cyan Arena Theme
+const hyperspeedOptions = {
+  distortion: "turbulentDistortion",
+  length: 400,
+  roadWidth: 12,
+  islandWidth: 2,
+  lanesPerRoad: 4,
+  fov: 90,
+  fovSpeedUp: 140,
+  speedUp: 3,
+  carLightsFade: 0.4,
+  totalSideLightSticks: 30,
+  lightPairsPerRoadWay: 40,
+  shoulderLinesWidthPercentage: 0.05,
+  brokenLinesWidthPercentage: 0.1,
+  brokenLinesLengthPercentage: 0.5,
+  lightStickWidth: [0.12, 0.5],
+  lightStickHeight: [1.3, 1.7],
+  movingAwaySpeed: [60, 80],
+  movingCloserSpeed: [-120, -160],
+  carLightsLength: [400 * 0.03, 400 * 0.2],
+  carLightsRadius: [0.05, 0.14],
+  carWidthPercentage: [0.3, 0.5],
+  carShiftX: [-0.8, 0.8],
+  carFloorSeparation: [0, 5],
+  colors: {
+    roadColor: 0x05020a,
+    islandColor: 0x0a0312,
+    background: 0x000000,
+    shoulderLines: 0xff007f, // Neon Pink
+    brokenLines: 0xbf00ff, // Electric Purple
+    leftCars: [0xff007f, 0xff1493, 0xff69b4], // Pink / Hot Pink Spectrum
+    rightCars: [0xbf00ff, 0x8a2be2, 0xda70d6], // Purple / Violet Spectrum
+    sticks: 0xff007f, // Pink Side Light Sticks
+  },
+};
+
 export default function DenmuHeroAnimation() {
+  const [isFontLoaded, setIsFontLoaded] = useState(false);
   const [phase, setPhase] = useState("entrance"); // entrance -> grid -> loading -> headerMove -> pageReady
   const [loadProgress, setLoadProgress] = useState(0);
 
@@ -17,11 +55,18 @@ export default function DenmuHeroAnimation() {
     { x: 100, y: 0 },
   ];
 
+  // Font Readiness Check
+  useEffect(() => {
+    if (document.fonts) {
+      document.fonts.ready.then(() => setIsFontLoaded(true));
+    } else {
+      setIsFontLoaded(true);
+    }
+  }, []);
+
   const textContainerVariants = {
     hidden: {},
-    visible: {
-      transition: { staggerChildren: 0.1 },
-    },
+    visible: { transition: { staggerChildren: 0.1 } },
   };
 
   const getLetterVariant = (index) => {
@@ -32,15 +77,12 @@ export default function DenmuHeroAnimation() {
         x: 0,
         y: 0,
         opacity: 1,
-        transition: {
-          duration: 0.7,
-          ease: [0.16, 1, 0.3, 1],
-        },
+        transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
       },
     };
   };
 
-  // 1. Blink effect complete -> Trigger vertical lines reveal
+  // Intro text flicker handler
   const handleLetterRevealComplete = async () => {
     const textElement = document.getElementById("intro-text-wrapper");
     if (!textElement) return;
@@ -59,7 +101,7 @@ export default function DenmuHeroAnimation() {
     setPhase("grid");
   };
 
-  // 2. Control Loading Bar Progress
+  // Progress loader ticker
   useEffect(() => {
     if (phase === "loading") {
       const interval = setInterval(() => {
@@ -77,35 +119,26 @@ export default function DenmuHeroAnimation() {
     }
   }, [phase]);
 
+  if (!isFontLoaded) {
+    return (
+      <div className="font-preloader">
+        <div className="font-preloader-spinner" />
+        <span className="font-preloader-text">LOADING ASSETS...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="denmu-hero-container">
-      {/* FULL-SCREEN FAULTY TERMINAL BACKGROUND */}
+      {/* FULL-SCREEN HYPERSPEED BACKGROUND */}
       {phase === "pageReady" && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1, ease: "easeOut" }}
-          className="fullscreen-terminal-bg"
+          transition={{ duration: 1.2, ease: "easeOut" }}
+          className="fullscreen-hyperspeed-bg"
         >
-          <FaultyTerminal
-            scale={2.9}
-            gridMul={[2, 1]}
-            digitSize={1.2}
-            timeScale={0.5}
-            pause={false}
-            scanlineIntensity={0.5}
-            glitchAmount={1}
-            flickerAmount={1}
-            noiseAmp={1}
-            chromaticAberration={0}
-            dither={0}
-            curvature={0.1}
-            tint="#471576"
-            mouseReact={true}
-            mouseStrength={1.5} /* Increased strength for noticeable reaction */
-            pageLoadAnimation
-            brightness={0.6}
-          />
+          <Hyperspeed effectOptions={hyperspeedOptions} />
         </motion.div>
       )}
 
@@ -211,7 +244,7 @@ export default function DenmuHeroAnimation() {
                 );
               })}
 
-              {/* Main Title Layer - Triggers setPhase("pageReady") on complete */}
+              {/* Main Title Layer */}
               <motion.div
                 initial={{ y: "40vh", scale: 1 }}
                 animate={{ y: 0, scale: 1.25 }}
@@ -232,7 +265,12 @@ export default function DenmuHeroAnimation() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="page-center-body"
             >
-              <h2 className="main-page-title">WELCOME TO THE ARENA</h2>
+              <h2 className="main-page-title">
+                WELCOME TO <span className="purple-accent">ARENA</span>
+              </h2>
+              <p className="main-page-sub">
+                Click and hold anywhere to activate Hyperspeed boost.
+              </p>
             </motion.div>
           )}
         </div>
