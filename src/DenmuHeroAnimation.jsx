@@ -268,9 +268,6 @@ export default function DenmuHeroAnimation() {
               <h2 className="main-page-title">
                 WELCOME TO <span className="purple-accent">ARENA</span>
               </h2>
-              <p className="main-page-sub">
-                Click and hold anywhere to activate Hyperspeed boost.
-              </p>
             </motion.div>
           )}
         </div>
