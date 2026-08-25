@@ -433,9 +433,6 @@ export default function DenmuHeroAnimation() {
                   </span>
                   ME TO <span className="purple-accent">ARENA</span>
                 </h2>
-                <span className="scroll-hint">
-                  SCROLL TO TRIGGER RIPPLE PORTAL
-                </span>
               </motion.div>
             )}
           </div>
