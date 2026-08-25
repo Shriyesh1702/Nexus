@@ -160,18 +160,20 @@ export default function DenmuHeroAnimation() {
     if (portalOriginRef.current) {
       const rect = portalOriginRef.current.getBoundingClientRect();
 
-      // Calculates horizontal center (% of viewport width)
+      // Calculates exact center coordinates relative to the current viewport
       const centerX = rect.left + rect.width / 2;
-      // Calculates vertical center (% of viewport height)
       const centerY = rect.top + rect.height / 2;
 
       const x = (centerX / window.innerWidth) * 100;
       const y = (centerY / window.innerHeight) * 100;
-      const X_OFFSET = -1.2; // Adjust negative value to nudge the origin further left
+
+      // Direct pixel/percentage nudge if the glyph visual weight sits slightly off-center
+      const X_OFFSET = -2; // Negative moves origin LEFT
+      const Y_OFFSET = 0.73; // Negative moves origin UP (fixes the downward offset)
 
       setPortalCoords({
         x: x + X_OFFSET,
-        y,
+        y: y + Y_OFFSET,
       });
     }
   };

@@ -291,8 +291,8 @@ body {
 .portal-letter-o {
   display: inline-block;
   position: relative;
-  line-height: 1;
-  vertical-align: middle; /* Ensures standard text alignment doesn't offset Y/X values */
+  vertical-align: baseline; /* Align perfectly with surrounding baseline */
+  line-height: inherit; /* Preserve exact header font sizing */
   color: #ff007f;
   text-shadow:
     0 0 12px #ff007f,
