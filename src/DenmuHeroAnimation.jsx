@@ -59,42 +59,79 @@ export default function DenmuHeroAnimation() {
     { x: 120, y: 0 },
   ];
 
-  // 1. Raw Scroll MotionValue
+  // Raw Virtual Scroll MotionValue
   const rawScrollProgress = useMotionValue(0);
 
-  // 2. Extra Frame Interpolation via Smooth Spring Physics
-  // Low mass + tuned damping adds high-frequency intermediate frames for high-refresh screens
-  const scrollProgress = useSpring(rawScrollProgress, {
+  // 1. Primary Portal Spring (First Wave)
+  const scrollProgress1 = useSpring(rawScrollProgress, {
     stiffness: 80,
     damping: 18,
     restDelta: 0.0001,
   });
 
-  // Multi-step transforms for dynamic keyframe density
-  const portalRadius = useTransform(
-    scrollProgress,
+  // 2. Secondary Portal Spring (Second Wave)
+  const scrollProgress2 = useSpring(rawScrollProgress, {
+    stiffness: 55,
+    damping: 20,
+    restDelta: 0.0001,
+  });
+
+  // 3. Tertiary Portal Spring (Third Wave)
+  const scrollProgress3 = useSpring(rawScrollProgress, {
+    stiffness: 40,
+    damping: 22,
+    restDelta: 0.0001,
+  });
+
+  // --- PORTAL 1 TRANSFORMS (Light Theme) ---
+  const portal1Radius = useTransform(
+    scrollProgress1,
     [0, 0.15, 0.5, 0.85, 1],
-    ["0%", "15%", "65%", "120%", "170%"],
+    ["0%", "20%", "75%", "130%", "180%"],
   );
-
-  const portalScale = useTransform(
-    scrollProgress,
-    [0, 0.2, 0.8, 1],
-    [0.8, 0.88, 0.96, 1],
-  );
-
-  const portalOpacity = useTransform(
-    scrollProgress,
+  const portal1Opacity = useTransform(
+    scrollProgress1,
     [0, 0.02, 0.08, 1],
     [0, 0.6, 1, 1],
   );
-
-  const clipPathStyle = useTransform(
-    portalRadius,
+  const clipPathStyle1 = useTransform(
+    portal1Radius,
     (r) => `circle(${r} at ${portalCoords.x}% ${portalCoords.y}%)`,
   );
 
-  // 3. Lenis Driven Frame Wheel Capture
+  // --- PORTAL 2 TRANSFORMS (Dark Theme) ---
+  const portal2Radius = useTransform(
+    scrollProgress2,
+    [0.15, 0.35, 0.7, 0.95, 1],
+    ["0%", "15%", "65%", "130%", "180%"],
+  );
+  const portal2Opacity = useTransform(
+    scrollProgress2,
+    [0.15, 0.18, 0.25, 1],
+    [0, 0.6, 1, 1],
+  );
+  const clipPathStyle2 = useTransform(
+    portal2Radius,
+    (r) => `circle(${r} at ${portalCoords.x}% ${portalCoords.y}%)`,
+  );
+
+  // --- PORTAL 3 TRANSFORMS (Reversed Light Theme) ---
+  const portal3Radius = useTransform(
+    scrollProgress3,
+    [0.35, 0.55, 0.8, 0.98, 1],
+    ["0%", "15%", "65%", "130%", "180%"],
+  );
+  const portal3Opacity = useTransform(
+    scrollProgress3,
+    [0.35, 0.38, 0.45, 1],
+    [0, 0.6, 1, 1],
+  );
+  const clipPathStyle3 = useTransform(
+    portal3Radius,
+    (r) => `circle(${r} at ${portalCoords.x}% ${portalCoords.y}%)`,
+  );
+
+  // Lenis Wheel & Touch Event Capture
   useEffect(() => {
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
@@ -113,9 +150,8 @@ export default function DenmuHeroAnimation() {
 
     const handleWheel = (e) => {
       e.preventDefault();
-      // Sensitivity: smaller divisor = longer animation timeline & more sub-frames
       const delta = e.deltaY;
-      progressVal += delta / 1800;
+      progressVal += delta / 2600; // Adjusted timeline length for 3 distinct waves
       progressVal = Math.max(0, Math.min(1, progressVal));
       rawScrollProgress.set(progressVal);
     };
@@ -130,7 +166,7 @@ export default function DenmuHeroAnimation() {
       const deltaY = startY - currentY;
       startY = currentY;
 
-      progressVal += deltaY / 1000;
+      progressVal += deltaY / 1400;
       progressVal = Math.max(0, Math.min(1, progressVal));
       rawScrollProgress.set(progressVal);
     };
@@ -155,39 +191,35 @@ export default function DenmuHeroAnimation() {
     };
   }, [phase, rawScrollProgress]);
 
-  // Coordinate positioning measurement
+  // Universal Center Measurement
   const updatePortalOrigin = () => {
     if (portalOriginRef.current) {
       const rect = portalOriginRef.current.getBoundingClientRect();
-
-      // Calculates exact center coordinates relative to the current viewport
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
 
-      const x = (centerX / window.innerWidth) * 100;
-      const y = (centerY / window.innerHeight) * 100;
-
-      // Direct pixel/percentage nudge if the glyph visual weight sits slightly off-center
-      const X_OFFSET = -2; // Negative moves origin LEFT
-      const Y_OFFSET = 0.73; // Negative moves origin UP (fixes the downward offset)
+      const universalX = (centerX / window.innerWidth) * 100;
+      const universalY = (centerY / window.innerHeight) * 100;
 
       setPortalCoords({
-        x: x + X_OFFSET,
-        y: y + Y_OFFSET,
+        x: Number(universalX.toFixed(3)),
+        y: Number(universalY.toFixed(3)),
       });
     }
   };
 
   useEffect(() => {
     if (phase === "pageReady") {
-      const timeout = setTimeout(() => {
-        updatePortalOrigin();
-      }, 50);
+      updatePortalOrigin();
+      const timeout = setTimeout(updatePortalOrigin, 100);
 
       window.addEventListener("resize", updatePortalOrigin);
+      window.addEventListener("orientationchange", updatePortalOrigin);
+
       return () => {
         clearTimeout(timeout);
         window.removeEventListener("resize", updatePortalOrigin);
+        window.removeEventListener("orientationchange", updatePortalOrigin);
       };
     }
   }, [phase]);
@@ -200,7 +232,6 @@ export default function DenmuHeroAnimation() {
     }
   }, []);
 
-  // Dense staggered letter entrance
   const textContainerVariants = {
     hidden: {},
     visible: { transition: { staggerChildren: 0.08 } },
@@ -238,7 +269,6 @@ export default function DenmuHeroAnimation() {
     setPhase("grid");
   };
 
-  // Intermediate loader ticks for granular progress
   useEffect(() => {
     if (phase === "loading") {
       const interval = setInterval(() => {
@@ -248,9 +278,9 @@ export default function DenmuHeroAnimation() {
             setTimeout(() => setPhase("headerMove"), 300);
             return 100;
           }
-          return prev + 2; // Increments by 2% instead of 4% to add more step frames
+          return prev + 2;
         });
-      }, 16); // 16ms tick (~60fps progress update)
+      }, 16);
 
       return () => clearInterval(interval);
     }
@@ -268,7 +298,6 @@ export default function DenmuHeroAnimation() {
   return (
     <div className="denmu-scroll-wrapper">
       <div className="denmu-hero-container">
-        {/* Fullscreen Canvas */}
         {phase === "pageReady" && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -280,7 +309,6 @@ export default function DenmuHeroAnimation() {
           </motion.div>
         )}
 
-        {/* 6 Gridlines for more dense frame structure */}
         <div className="gridlines-container">
           {[0, 1, 2, 3, 4, 5].map((i) => (
             <motion.div
@@ -309,7 +337,6 @@ export default function DenmuHeroAnimation() {
           ))}
         </div>
 
-        {/* Intro Loading Sequence */}
         {(phase === "entrance" || phase === "grid" || phase === "loading") && (
           <div className="intro-screen">
             <motion.div
@@ -354,7 +381,6 @@ export default function DenmuHeroAnimation() {
           </div>
         )}
 
-        {/* Dense Motion Blur Header Trails (8 sub-layers) */}
         {(phase === "headerMove" || phase === "pageReady") && (
           <div className="hero-content">
             <header className="hero-header-wrapper">
@@ -402,29 +428,78 @@ export default function DenmuHeroAnimation() {
               >
                 <h2 className="main-page-title">
                   WELC
-                  <span className="portal-letter-o" ref={portalOriginRef}>
-                    O
+                  <span className="portal-anchor" ref={portalOriginRef}>
+                    <span className="portal-letter-o">O</span>
                   </span>
                   ME TO <span className="purple-accent">ARENA</span>
                 </h2>
-                <span className="scroll-hint">SCROLL TO EXPAND PORTAL</span>
+                <span className="scroll-hint">
+                  SCROLL TO TRIGGER RIPPLE PORTAL
+                </span>
               </motion.div>
             )}
           </div>
         )}
       </div>
 
-      {/* Portal Overlay */}
+      {/* PORTAL 1: Light Mode */}
       {phase === "pageReady" && (
         <motion.div
-          className="portal-overlay-container"
+          className="portal-overlay-container portal-layer-1"
           style={{
-            clipPath: clipPathStyle,
-            scale: portalScale,
-            opacity: portalOpacity,
+            clipPath: clipPathStyle1,
+            opacity: portal1Opacity,
           }}
         >
-          <div className="inverted-theme-wrapper">
+          <div className="inverted-theme-wrapper mode-light">
+            <div className="next-page-layout">
+              <section className="next-page-hero">
+                <h1 className="next-page-title">NEXT PAGE CONTENT</h1>
+                <p className="next-page-description">
+                  You scrolled through the portal into the inverted theme
+                  section.
+                </p>
+                <button className="inverted-btn">EXPLORE ARENA</button>
+              </section>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* PORTAL 2: Dark Mode */}
+      {phase === "pageReady" && (
+        <motion.div
+          className="portal-overlay-container portal-layer-2"
+          style={{
+            clipPath: clipPathStyle2,
+            opacity: portal2Opacity,
+          }}
+        >
+          <div className="inverted-theme-wrapper mode-dark">
+            <div className="next-page-layout">
+              <section className="next-page-hero">
+                <h1 className="next-page-title">NEXT PAGE CONTENT</h1>
+                <p className="next-page-description">
+                  You scrolled through the portal into the inverted theme
+                  section.
+                </p>
+                <button className="inverted-btn">EXPLORE ARENA</button>
+              </section>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* PORTAL 3: Reversed Light Mode (Identical Text, Inverted Colors) */}
+      {phase === "pageReady" && (
+        <motion.div
+          className="portal-overlay-container portal-layer-3"
+          style={{
+            clipPath: clipPathStyle3,
+            opacity: portal3Opacity,
+          }}
+        >
+          <div className="inverted-theme-wrapper mode-light">
             <div className="next-page-layout">
               <section className="next-page-hero">
                 <h1 className="next-page-title">NEXT PAGE CONTENT</h1>
