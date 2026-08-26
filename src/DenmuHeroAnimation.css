@@ -577,6 +577,7 @@ body {
   animation: arena-grid-flow 9s linear infinite;
 }
 
+
 @keyframes arena-ambient-drift {
   from {
     filter: hue-rotate(0deg) brightness(0.85);
@@ -682,6 +683,7 @@ body {
 }
 
 .arena-image-rail__card {
+  --rail-glow: rgba(191, 0, 255, 0.28);
   position: relative;
   z-index: 0;
   border: 1px solid rgba(224, 176, 255, 0.3);
@@ -727,19 +729,19 @@ body {
   z-index: 1;
   box-shadow:
     0 1.4rem 2.5rem rgba(0, 0, 0, 0.5),
-    0 0 2.5rem rgba(191, 0, 255, 0.28),
+    0 0 2.5rem var(--rail-glow),
     inset 0 1px 0 rgba(255, 255, 255, 0.22);
   transform: scale(1.14) translateZ(2.5rem);
 }
 
-/* Expand side-rail cards toward the center of the viewport so their outer
-   edges stay within the page rather than being clipped at the screen edge. */
+/* Counter the rail's tilt on only the focused card, while moving it inward
+   so the enlarged edge stays within the viewport. */
 .arena-image-rail--left .arena-image-rail__card.is-hovered {
-  transform: translateX(10%) scale(1.14) translateZ(2.5rem);
+  transform: translateX(13%) rotateY(-12deg) scale(1.14) translateZ(2.5rem);
 }
 
 .arena-image-rail--right .arena-image-rail__card.is-hovered {
-  transform: translateX(-10%) scale(1.14) translateZ(2.5rem);
+  transform: translateX(-13%) rotateY(12deg) scale(1.14) translateZ(2.5rem);
 }
 
 .arena-image-rail__card.is-hovered img {

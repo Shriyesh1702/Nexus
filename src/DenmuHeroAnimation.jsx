@@ -45,10 +45,22 @@ const hyperspeedOptions = {
   },
 };
 
-const arenaImages = [1015, 1025, 1039, 1043, 1044, 1050, 1062, 1069].map(
-  (id) => `https://picsum.photos/id/${id}/720/520`,
-);
-const arenaImageSequence = arenaImages.flatMap((image) => [image, null]);
+// Add matching .jpg and .gif files in public/arena-gifs. The JPG is the
+// still poster; the GIF is mounted only while its card is hovered.
+const arenaGifs = [
+  "viper",
+  "viper",
+  "viper",
+  "viper",
+  "viper",
+  "viper",
+  "viper",
+  "viper",
+].map((name) => ({
+  poster: `/arena-gifs/${name}.jpg`,
+  gif: `/arena-gifs/${name}.gif`,
+}));
+const arenaImageSequence = arenaGifs.flatMap((media) => [media, null]);
 
 export default function DenmuHeroAnimation() {
   const [isFontLoaded, setIsFontLoaded] = useState(false);
@@ -57,11 +69,60 @@ export default function DenmuHeroAnimation() {
   const [portalCoords, setPortalCoords] = useState({ x: 50, y: 50 });
   const [imageRailsPaused, setImageRailsPaused] = useState(false);
   const [hoveredRailImage, setHoveredRailImage] = useState(null);
+  const [railImageColors, setRailImageColors] = useState({});
 
   const portalOriginRef = useRef(null);
   const lenisRef = useRef(null);
 
   const introText = "NEXUS";
+
+  const updateRailImageColor = (imageSrc, imageElement) => {
+    try {
+      const sampleSize = 48;
+      const edgeDepth = 4;
+      const canvas = document.createElement("canvas");
+      canvas.width = sampleSize;
+      canvas.height = sampleSize;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+
+      if (!context) return;
+
+      context.drawImage(imageElement, 0, 0, sampleSize, sampleSize);
+      const { data } = context.getImageData(0, 0, sampleSize, sampleSize);
+      let red = 0;
+      let green = 0;
+      let blue = 0;
+      let weight = 0;
+
+      for (let y = 0; y < sampleSize; y += 1) {
+        for (let x = 0; x < sampleSize; x += 1) {
+          if (
+            x >= edgeDepth &&
+            x < sampleSize - edgeDepth &&
+            y >= edgeDepth &&
+            y < sampleSize - edgeDepth
+          )
+            continue;
+
+          const pixel = (y * sampleSize + x) * 4;
+          const alpha = data[pixel + 3] / 255;
+          red += data[pixel] * alpha;
+          green += data[pixel + 1] * alpha;
+          blue += data[pixel + 2] * alpha;
+          weight += alpha;
+        }
+      }
+
+      if (!weight) return;
+
+      const glow = `rgba(${Math.round(red / weight)}, ${Math.round(green / weight)}, ${Math.round(blue / weight)}, 0.62)`;
+      setRailImageColors((colors) =>
+        colors[imageSrc] === glow ? colors : { ...colors, [imageSrc]: glow },
+      );
+    } catch {
+      // Keep the CSS fallback glow when a cross-origin image cannot be sampled.
+    }
+  };
 
   // Raw Virtual Scroll MotionValue
   const rawScrollProgress = useMotionValue(0);
@@ -383,20 +444,42 @@ export default function DenmuHeroAnimation() {
                   }}
                 >
                   <div className="arena-image-rail__track">
-                    {[...arenaImageSequence, ...arenaImageSequence].map((image, index) => (
-                      image ? (
-                        <span
-                          key={`left-${index}`}
-                          className={`arena-image-rail__card${hoveredRailImage === `left-${index}` ? " is-hovered" : ""}`}
-                          onPointerEnter={() => setHoveredRailImage(`left-${index}`)}
-                          onPointerLeave={() => setHoveredRailImage(null)}
-                        >
-                          <img src={image} alt="" />
-                        </span>
-                      ) : (
-                        <span key={`left-blank-${index}`} className="arena-image-rail__blank" />
-                      )
-                    ))}
+                    {[...arenaImageSequence, ...arenaImageSequence].map(
+                      (media, index) => {
+                        if (!media)
+                          return (
+                            <span
+                              key={`left-blank-${index}`}
+                              className="arena-image-rail__blank"
+                            />
+                          );
+
+                        const cardId = `left-${index}`;
+                        const isHovered = hoveredRailImage === cardId;
+                        return (
+                          <span
+                            key={cardId}
+                            className={`arena-image-rail__card${isHovered ? " is-hovered" : ""}`}
+                            style={{
+                              "--rail-glow": railImageColors[media.poster],
+                            }}
+                            onPointerEnter={() => setHoveredRailImage(cardId)}
+                            onPointerLeave={() => setHoveredRailImage(null)}
+                          >
+                            <img
+                              src={isHovered ? media.gif : media.poster}
+                              alt=""
+                              onLoad={(event) =>
+                                updateRailImageColor(
+                                  media.poster,
+                                  event.currentTarget,
+                                )
+                              }
+                            />
+                          </span>
+                        );
+                      },
+                    )}
                   </div>
                 </div>
                 <div
@@ -408,20 +491,42 @@ export default function DenmuHeroAnimation() {
                   }}
                 >
                   <div className="arena-image-rail__track">
-                    {[...arenaImageSequence, ...arenaImageSequence].map((image, index) => (
-                      image ? (
-                        <span
-                          key={`right-${index}`}
-                          className={`arena-image-rail__card${hoveredRailImage === `right-${index}` ? " is-hovered" : ""}`}
-                          onPointerEnter={() => setHoveredRailImage(`right-${index}`)}
-                          onPointerLeave={() => setHoveredRailImage(null)}
-                        >
-                          <img src={image} alt="" />
-                        </span>
-                      ) : (
-                        <span key={`right-blank-${index}`} className="arena-image-rail__blank" />
-                      )
-                    ))}
+                    {[...arenaImageSequence, ...arenaImageSequence].map(
+                      (media, index) => {
+                        if (!media)
+                          return (
+                            <span
+                              key={`right-blank-${index}`}
+                              className="arena-image-rail__blank"
+                            />
+                          );
+
+                        const cardId = `right-${index}`;
+                        const isHovered = hoveredRailImage === cardId;
+                        return (
+                          <span
+                            key={cardId}
+                            className={`arena-image-rail__card${isHovered ? " is-hovered" : ""}`}
+                            style={{
+                              "--rail-glow": railImageColors[media.poster],
+                            }}
+                            onPointerEnter={() => setHoveredRailImage(cardId)}
+                            onPointerLeave={() => setHoveredRailImage(null)}
+                          >
+                            <img
+                              src={isHovered ? media.gif : media.poster}
+                              alt=""
+                              onLoad={(event) =>
+                                updateRailImageColor(
+                                  media.poster,
+                                  event.currentTarget,
+                                )
+                              }
+                            />
+                          </span>
+                        );
+                      },
+                    )}
                   </div>
                 </div>
               </motion.div>
