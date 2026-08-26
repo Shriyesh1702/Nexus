@@ -45,8 +45,8 @@ const hyperspeedOptions = {
   },
 };
 
-// Add matching .jpg and .gif files in public/arena-gifs. The JPG is the
-// still poster; the GIF is mounted only while its card is hovered.
+// Add matching .jpg and .webm files in public/arena-gifs. The JPG is the
+// still poster; the WebM video is mounted only while its card is hovered.
 const arenaGifs = [
   "viper",
   "yoru",
@@ -58,7 +58,7 @@ const arenaGifs = [
   "yoru",
 ].map((name) => ({
   poster: `/arena-gifs/${name}.jpg`,
-  gif: `/arena-gifs/${name}.gif`,
+  video: `/arena-gifs/${name}.webm`,
 }));
 const arenaImageSequence = arenaGifs.flatMap((media) => [media, null]);
 
@@ -74,9 +74,9 @@ const preloadAssets = [
     src: new URL("./assets/videos/back.mp4", import.meta.url).href,
   },
   ...new Map(
-    arenaGifs.flatMap((media) => [
-      [media.poster, { type: "image", src: media.poster }],
-      [media.gif, { type: "image", src: media.gif }],
+    arenaGifs.map((media) => [
+      media.poster,
+      { type: "image", src: media.poster },
     ]),
   ).values(),
 ];
@@ -545,11 +545,16 @@ export default function DenmuHeroAnimation() {
                               }
                             />
                             {isHovered && (
-                              <img
-                                key={`${cardId}-gif`}
-                                className="arena-image-rail__gif"
-                                src={media.gif}
-                                alt=""
+                              <video
+                                key={`${cardId}-video`}
+                                className="arena-image-rail__video"
+                                src={media.video}
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
+                                preload="none"
+                                aria-hidden="true"
                               />
                             )}
                           </span>
@@ -600,11 +605,16 @@ export default function DenmuHeroAnimation() {
                               }
                             />
                             {isHovered && (
-                              <img
-                                key={`${cardId}-gif`}
-                                className="arena-image-rail__gif"
-                                src={media.gif}
-                                alt=""
+                              <video
+                                key={`${cardId}-video`}
+                                className="arena-image-rail__video"
+                                src={media.video}
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
+                                preload="none"
+                                aria-hidden="true"
                               />
                             )}
                           </span>
