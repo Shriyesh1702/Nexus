@@ -7,6 +7,7 @@ import IntroSequence from "./components/IntroSequence";
 import HeroHeader from "./components/HeroHeader";
 import FinalNavbar from "./components/FinalNavbar";
 import PortalOverlay from "./components/PortalOverlay";
+import DriftWall from "./components/DriftWall";
 import "./DenmuHeroAnimation.css";
 
 const hyperspeedOptions = {
@@ -297,11 +298,18 @@ export default function DenmuHeroAnimation() {
         )}
 
         <Gridlines phase={phase} onGridComplete={() => setPhase("loading")} />
-        <IntroSequence phase={phase} loadProgress={loadProgress} onRevealComplete={handleLetterRevealComplete} />
+        <IntroSequence
+          phase={phase}
+          loadProgress={loadProgress}
+          onRevealComplete={handleLetterRevealComplete}
+        />
 
         {(phase === "headerMove" || phase === "pageReady") && (
           <div className="hero-content">
-            <HeroHeader title={introText} onAnimationComplete={() => setPhase("pageReady")} />
+            <HeroHeader
+              title={introText}
+              onAnimationComplete={() => setPhase("pageReady")}
+            />
 
             {phase === "pageReady" && (
               <motion.div
@@ -327,7 +335,11 @@ export default function DenmuHeroAnimation() {
       </div>
 
       {phase === "pageReady" && (
-        <PortalOverlay className="portal-layer-1" clipPath={clipPathStyle1} opacity={portal1Opacity}>
+        <PortalOverlay
+          className="portal-layer-1"
+          clipPath={clipPathStyle1}
+          opacity={portal1Opacity}
+        >
           <div className="inverted-theme-wrapper mode-light">
             <div className="next-page-layout">
               <header className="hero-header-wrapper">
@@ -343,13 +355,56 @@ export default function DenmuHeroAnimation() {
       )}
 
       {phase === "pageReady" && (
-        <PortalOverlay className="portal-layer-2" clipPath={clipPathStyle2} opacity={portal2Opacity}>
+        <PortalOverlay
+          className="portal-layer-2"
+          clipPath={clipPathStyle2}
+          opacity={portal2Opacity}
+        >
           <div className="inverted-theme-wrapper mode-dark">
             <div className="next-page-layout">
-              <FinalNavbar
-                title={introText}
-                motionValues={{ headerPaddingTop, headerMarginTop, navLeftX, navRightX, navLeftClip, navRightClip, navReveal, navPointer, nexusScale, nexusFontSize }}
-              />
+              <motion.div
+                className="final-driftwall-background"
+                initial={{ opacity: 0, scale: 1.04 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{
+                  duration: 1.25,
+                  delay: 0.45,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                aria-hidden="true"
+              >
+                <DriftWall
+                  columns={10}
+                  tileWidth={520}
+                  tileHeight={146}
+                  gap={16}
+                  speed={28}
+                  tilt={12}
+                  turn={-10}
+                  depth={180}
+                  dim={0.38}
+                  fade={0.45}
+                  parallax={0}
+                  overlayColor="#13031f"
+                />
+              </motion.div>
+              <div className="final-navbar-shell">
+                <FinalNavbar
+                  title={introText}
+                  motionValues={{
+                    headerPaddingTop,
+                    headerMarginTop,
+                    navLeftX,
+                    navRightX,
+                    navLeftClip,
+                    navRightClip,
+                    navReveal,
+                    navPointer,
+                    nexusScale,
+                    nexusFontSize,
+                  }}
+                />
+              </div>
             </div>
           </div>
         </PortalOverlay>
