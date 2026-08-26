@@ -1,7 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
 import Lenis from "@studio-freight/lenis";
 import Hyperspeed from "./Hyperspeed";
+import Gridlines from "./components/Gridlines";
+import IntroSequence from "./components/IntroSequence";
+import HeroHeader from "./components/HeroHeader";
+import FinalNavbar from "./components/FinalNavbar";
+import PortalOverlay from "./components/PortalOverlay";
 import "./DenmuHeroAnimation.css";
 
 const hyperspeedOptions = {
@@ -50,40 +55,28 @@ export default function DenmuHeroAnimation() {
   const lenisRef = useRef(null);
 
   const introText = "NEXUS";
-  const letters = Array.from(introText);
-
-  const directions = [
-    { x: 0, y: -120 },
-    { x: 0, y: 120 },
-    { x: -120, y: 0 },
-    { x: 120, y: 0 },
-  ];
 
   // Raw Virtual Scroll MotionValue
   const rawScrollProgress = useMotionValue(0);
 
-  // 1. Primary Portal Spring (First Wave)
+  // Springs for smooth transitions
   const scrollProgress1 = useSpring(rawScrollProgress, {
     stiffness: 80,
     damping: 18,
     restDelta: 0.0001,
   });
-
-  // 2. Secondary Portal Spring (Second Wave)
   const scrollProgress2 = useSpring(rawScrollProgress, {
     stiffness: 60,
     damping: 20,
     restDelta: 0.0001,
   });
-
-  // 3. Header collapse spring (Third Wave)
   const scrollProgress3 = useSpring(rawScrollProgress, {
     stiffness: 70,
     damping: 19,
     restDelta: 0.0001,
   });
 
-  // --- PORTAL 1 TRANSFORMS (Scroll: 0.0 -> 0.42) ---
+  // PORTAL TRANSFORMS
   const portal1Radius = useTransform(
     scrollProgress1,
     [0, 0.32, 0.42],
@@ -95,7 +88,6 @@ export default function DenmuHeroAnimation() {
     (r) => `circle(${r} at ${portalCoords.x}% ${portalCoords.y}%)`,
   );
 
-  // --- PORTAL 2 TRANSFORMS (Scroll: 0.16 -> 0.62) ---
   const portal2Radius = useTransform(
     scrollProgress2,
     [0.16, 0.52, 0.62],
@@ -107,7 +99,7 @@ export default function DenmuHeroAnimation() {
     (r) => `circle(${r} at ${portalCoords.x}% ${portalCoords.y}%)`,
   );
 
-  // --- HEADER COLLAPSE (Scroll: 0.70 -> 1.0) ---
+  // HEADER COLLAPSE & DISCLOSURE TRANSFORMS (Scroll: 0.70 -> 1.0)
   const headerCompact = useTransform(scrollProgress3, [0.7, 0.92], [0, 1]);
   const navReveal = useTransform(scrollProgress3, [0.82, 1], [0, 1]);
 
@@ -121,7 +113,8 @@ export default function DenmuHeroAnimation() {
     [0, 1],
     ["3.5rem", "0rem"],
   );
-  const nexusScale = useTransform(headerCompact, [0, 1], [1.25, 1]);
+  // Keep every portal title at the same base size before the final navbar compacts.
+  const nexusScale = useTransform(headerCompact, [0, 1], [1, 1]);
   const nexusFontSize = useTransform(headerCompact, (t) => {
     const rem =
       typeof window === "undefined"
@@ -131,16 +124,30 @@ export default function DenmuHeroAnimation() {
       12 * rem,
       Math.max(4.5 * rem, 0.16 * window.innerWidth),
     );
-    const end = 2.25 * rem;
+    const end = 3 * rem;
     return `${start + (end - start) * t}px`;
   });
-  const navLeftX = useTransform(navReveal, [0, 1], ["-3.5rem", "0rem"]);
-  const navRightX = useTransform(navReveal, [0, 1], ["3.5rem", "0rem"]);
+
+  // --- NEW "EMERGE FROM HEADER" ANIMATION VARS ---
+  // Slidout displacement: start tucked into the center logo, move out to 0px
+  const navLeftX = useTransform(navReveal, [0, 1], ["60%", "0%"]);
+  const navRightX = useTransform(navReveal, [0, 1], ["-60%", "0%"]);
+
+  // Mask clipPaths: Expand out from center title edges
+  const navLeftClip = useTransform(
+    navReveal,
+    (v) => `inset(0% 0% 0% ${100 - v * 100}%)`,
+  );
+  const navRightClip = useTransform(
+    navReveal,
+    (v) => `inset(0% ${100 - v * 100}% 0% 0%)`,
+  );
+
   const navPointer = useTransform(navReveal, (v) =>
     v > 0.55 ? "auto" : "none",
   );
 
-  // Lenis Wheel & Touch Event Capture
+  // Lenis & Event Handlers setup
   useEffect(() => {
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
@@ -154,13 +161,11 @@ export default function DenmuHeroAnimation() {
     });
 
     lenisRef.current = lenis;
-
     let progressVal = 0;
 
     const handleWheel = (e) => {
       e.preventDefault();
-      const delta = e.deltaY;
-      progressVal += delta / 900;
+      progressVal += e.deltaY / 900;
       progressVal = Math.max(0, Math.min(1, progressVal));
       rawScrollProgress.set(progressVal);
     };
@@ -169,22 +174,16 @@ export default function DenmuHeroAnimation() {
     const handleTouchStart = (e) => {
       startY = e.touches[0].clientY;
     };
-
     const handleTouchMove = (e) => {
       const currentY = e.touches[0].clientY;
       const deltaY = startY - currentY;
       startY = currentY;
-
-      // Check if device is mobile (width <= 768px)
-      const isMobile = window.innerWidth <= 768;
-
-      // Reduced from 400 down to 150 for mobile (~2.5x faster swipe response)
-      const touchSensitivity = isMobile ? 220 : 600;
-
+      const touchSensitivity = window.innerWidth <= 768 ? 220 : 600;
       progressVal += deltaY / touchSensitivity;
       progressVal = Math.max(0, Math.min(1, progressVal));
       rawScrollProgress.set(progressVal);
     };
+
     window.addEventListener("wheel", handleWheel, { passive: false });
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
     window.addEventListener("touchmove", handleTouchMove, { passive: true });
@@ -205,19 +204,15 @@ export default function DenmuHeroAnimation() {
     };
   }, [phase, rawScrollProgress]);
 
-  // Universal Center Measurement
   const updatePortalOrigin = () => {
     if (portalOriginRef.current) {
       const rect = portalOriginRef.current.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
 
-      const universalX = (centerX / window.innerWidth) * 100;
-      const universalY = (centerY / window.innerHeight) * 100;
-
       setPortalCoords({
-        x: Number(universalX.toFixed(3)),
-        y: Number(universalY.toFixed(3)),
+        x: Number(((centerX / window.innerWidth) * 100).toFixed(3)),
+        y: Number(((centerY / window.innerHeight) * 100).toFixed(3)),
       });
     }
   };
@@ -226,10 +221,8 @@ export default function DenmuHeroAnimation() {
     if (phase === "pageReady") {
       updatePortalOrigin();
       const timeout = setTimeout(updatePortalOrigin, 100);
-
       window.addEventListener("resize", updatePortalOrigin);
       window.addEventListener("orientationchange", updatePortalOrigin);
-
       return () => {
         clearTimeout(timeout);
         window.removeEventListener("resize", updatePortalOrigin);
@@ -245,25 +238,6 @@ export default function DenmuHeroAnimation() {
       setIsFontLoaded(true);
     }
   }, []);
-
-  const textContainerVariants = {
-    hidden: {},
-    visible: { transition: { staggerChildren: 0.08 } },
-  };
-
-  const getLetterVariant = (index) => {
-    const dir = directions[index % directions.length];
-    return {
-      hidden: { x: dir.x, y: dir.y, opacity: 0, scale: 0.8 },
-      visible: {
-        x: 0,
-        y: 0,
-        opacity: 1,
-        scale: 1,
-        transition: { duration: 0.85, ease: [0.16, 1, 0.3, 1] },
-      },
-    };
-  };
 
   const handleLetterRevealComplete = async () => {
     const textElement = document.getElementById("intro-text-wrapper");
@@ -295,7 +269,6 @@ export default function DenmuHeroAnimation() {
           return prev + 2;
         });
       }, 16);
-
       return () => clearInterval(interval);
     }
   }, [phase]);
@@ -323,115 +296,12 @@ export default function DenmuHeroAnimation() {
           </motion.div>
         )}
 
-        <div className="gridlines-container">
-          {[0, 1, 2, 3, 4, 5].map((i) => (
-            <motion.div
-              key={i}
-              initial={{ scaleY: 0, opacity: 1 }}
-              animate={{
-                scaleY:
-                  phase === "entrance"
-                    ? 0
-                    : phase === "grid" || phase === "loading"
-                      ? 1
-                      : 0,
-                opacity:
-                  phase === "headerMove" || phase === "pageReady" ? 0 : 1,
-              }}
-              transition={{
-                duration: 0.75,
-                delay: phase === "entrance" || phase === "grid" ? i * 0.08 : 0,
-                ease: [0.16, 1, 0.3, 1],
-              }}
-              onAnimationComplete={() => {
-                if (i === 5 && phase === "grid") setPhase("loading");
-              }}
-              className="gridline"
-            />
-          ))}
-        </div>
-
-        {(phase === "entrance" || phase === "grid" || phase === "loading") && (
-          <div className="intro-screen">
-            <motion.div
-              id="intro-text-wrapper"
-              variants={textContainerVariants}
-              initial="hidden"
-              animate="visible"
-              onAnimationComplete={handleLetterRevealComplete}
-              className="intro-text-wrapper"
-            >
-              {letters.map((char, index) => (
-                <div key={index} className="letter-mask-container">
-                  <motion.h1
-                    variants={getLetterVariant(index)}
-                    className="hero-nexus-title"
-                  >
-                    {char}
-                  </motion.h1>
-                </div>
-              ))}
-            </motion.div>
-
-            {phase === "loading" && (
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="bottom-loader-container"
-              >
-                <div className="bottom-loader-info">
-                  <span>INITIALIZING GAMING ARENA</span>
-                  <span>{loadProgress}%</span>
-                </div>
-                <div className="bottom-loader-track">
-                  <motion.div
-                    className="bottom-loader-fill"
-                    style={{ scaleX: loadProgress / 100 }}
-                  />
-                </div>
-              </motion.div>
-            )}
-          </div>
-        )}
+        <Gridlines phase={phase} onGridComplete={() => setPhase("loading")} />
+        <IntroSequence phase={phase} loadProgress={loadProgress} onRevealComplete={handleLetterRevealComplete} />
 
         {(phase === "headerMove" || phase === "pageReady") && (
           <div className="hero-content">
-            <header className="hero-header-wrapper">
-              <div className="title-trail-container">
-                {Array.from({ length: 8 }).map((_, index) => {
-                  const layerNum = 8 - index;
-                  const delay = layerNum * 0.025;
-                  const startOpacity = 0.8 - layerNum * 0.08;
-
-                  return (
-                    <motion.div
-                      key={layerNum}
-                      initial={{ y: "45vh", scale: 0.9, opacity: startOpacity }}
-                      animate={{ y: 0, scale: 1.25, opacity: 0 }}
-                      transition={{
-                        duration: 1.05,
-                        delay: delay,
-                        ease: [0.16, 1, 0.3, 1],
-                      }}
-                      className={`centered-header-title-wrapper afterimage trail-layer-${layerNum}`}
-                    >
-                      <h1 className="hero-nexus-title">{introText}</h1>
-                    </motion.div>
-                  );
-                })}
-
-                <motion.div
-                  initial={{ y: "45vh", scale: 0.9 }}
-                  animate={{ y: 0, scale: 1.25 }}
-                  transition={{ duration: 1.05, ease: [0.16, 1, 0.3, 1] }}
-                  onAnimationComplete={() => setPhase("pageReady")}
-                  className="centered-header-title-wrapper main-title"
-                >
-                  <h1 className="hero-nexus-title">{introText}</h1>
-                </motion.div>
-              </div>
-            </header>
+            <HeroHeader title={introText} onAnimationComplete={() => setPhase("pageReady")} />
 
             {phase === "pageReady" && (
               <motion.div
@@ -456,15 +326,8 @@ export default function DenmuHeroAnimation() {
         )}
       </div>
 
-      {/* PORTAL 1: Light Theme (First Expansion) */}
       {phase === "pageReady" && (
-        <motion.div
-          className="portal-overlay-container portal-layer-1"
-          style={{
-            clipPath: clipPathStyle1,
-            opacity: portal1Opacity,
-          }}
-        >
+        <PortalOverlay className="portal-layer-1" clipPath={clipPathStyle1} opacity={portal1Opacity}>
           <div className="inverted-theme-wrapper mode-light">
             <div className="next-page-layout">
               <header className="hero-header-wrapper">
@@ -476,68 +339,20 @@ export default function DenmuHeroAnimation() {
               </header>
             </div>
           </div>
-        </motion.div>
+        </PortalOverlay>
       )}
 
-      {/* PORTAL 2: Dark Neon Theme (Second Expansion) */}
       {phase === "pageReady" && (
-        <motion.div
-          className="portal-overlay-container portal-layer-2"
-          style={{
-            clipPath: clipPathStyle2,
-            opacity: portal2Opacity,
-          }}
-        >
+        <PortalOverlay className="portal-layer-2" clipPath={clipPathStyle2} opacity={portal2Opacity}>
           <div className="inverted-theme-wrapper mode-dark">
             <div className="next-page-layout">
-              <motion.header
-                className="hero-header-wrapper final-topbar"
-                style={{
-                  paddingTop: headerPaddingTop,
-                  marginTop: headerMarginTop,
-                }}
-              >
-                <motion.nav
-                  className="topbar-links topbar-links-left"
-                  style={{
-                    x: navLeftX,
-                    opacity: navReveal,
-                    pointerEvents: navPointer,
-                  }}
-                >
-                  <a href="#events">Events</a>
-                  <a href="#domains">Domains</a>
-                  <a href="#about">About Us</a>
-                </motion.nav>
-
-                <motion.div
-                  className="centered-header-title-wrapper main-title final-nexus-mark"
-                  style={{ scale: nexusScale }}
-                >
-                  <motion.h1
-                    className="hero-nexus-title"
-                    style={{ fontSize: nexusFontSize }}
-                  >
-                    {introText}
-                  </motion.h1>
-                </motion.div>
-
-                <motion.nav
-                  className="topbar-links topbar-links-right"
-                  style={{
-                    x: navRightX,
-                    opacity: navReveal,
-                    pointerEvents: navPointer,
-                  }}
-                >
-                  <a href="#hall-of-fame">Hall of Fame</a>
-                  <a href="#esports">Esports</a>
-                  <a href="#sponsors">Sponsors</a>
-                </motion.nav>
-              </motion.header>
+              <FinalNavbar
+                title={introText}
+                motionValues={{ headerPaddingTop, headerMarginTop, navLeftX, navRightX, navLeftClip, navRightClip, navReveal, navPointer, nexusScale, nexusFontSize }}
+              />
             </div>
           </div>
-        </motion.div>
+        </PortalOverlay>
       )}
     </div>
   );
