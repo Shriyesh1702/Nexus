@@ -467,7 +467,7 @@ export default function DenmuHeroAnimation() {
                             onPointerLeave={() => setHoveredRailImage(null)}
                           >
                             <img
-                              src={isHovered ? media.gif : media.poster}
+                              src={media.poster}
                               alt=""
                               onLoad={(event) =>
                                 updateRailImageColor(
@@ -476,6 +476,14 @@ export default function DenmuHeroAnimation() {
                                 )
                               }
                             />
+                            {isHovered && (
+                              <img
+                                key={`${cardId}-gif`}
+                                className="arena-image-rail__gif"
+                                src={media.gif}
+                                alt=""
+                              />
+                            )}
                           </span>
                         );
                       },
@@ -514,7 +522,7 @@ export default function DenmuHeroAnimation() {
                             onPointerLeave={() => setHoveredRailImage(null)}
                           >
                             <img
-                              src={isHovered ? media.gif : media.poster}
+                              src={media.poster}
                               alt=""
                               onLoad={(event) =>
                                 updateRailImageColor(
@@ -523,6 +531,14 @@ export default function DenmuHeroAnimation() {
                                 )
                               }
                             />
+                            {isHovered && (
+                              <img
+                                key={`${cardId}-gif`}
+                                className="arena-image-rail__gif"
+                                src={media.gif}
+                                alt=""
+                              />
+                            )}
                           </span>
                         );
                       },

@@ -710,6 +710,12 @@ body {
   transition: filter 280ms ease, opacity 280ms ease;
 }
 
+.arena-image-rail__card .arena-image-rail__gif {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
 .arena-image-rail__card::after {
   content: "";
   position: absolute;
