@@ -49,21 +49,63 @@ const hyperspeedOptions = {
 // still poster; the GIF is mounted only while its card is hovered.
 const arenaGifs = [
   "viper",
+  "yoru",
   "viper",
+  "yoru",
   "viper",
+  "yoru",
   "viper",
-  "viper",
-  "viper",
-  "viper",
-  "viper",
+  "yoru",
 ].map((name) => ({
   poster: `/arena-gifs/${name}.jpg`,
   gif: `/arena-gifs/${name}.gif`,
 }));
 const arenaImageSequence = arenaGifs.flatMap((media) => [media, null]);
 
+const preloadAssets = [
+  { type: "font", src: new URL("./assets/MyFont.otf", import.meta.url).href },
+  {
+    type: "image",
+    src: new URL("./assets/chrome-sprite-2x.png", import.meta.url).href,
+  },
+  { type: "image", src: new URL("./assets/dino.png", import.meta.url).href },
+  {
+    type: "video",
+    src: new URL("./assets/videos/back.mp4", import.meta.url).href,
+  },
+  ...new Map(
+    arenaGifs.flatMap((media) => [
+      [media.poster, { type: "image", src: media.poster }],
+      [media.gif, { type: "image", src: media.gif }],
+    ]),
+  ).values(),
+];
+
+function preloadAsset({ type, src }) {
+  if (type === "font") {
+    return document.fonts?.load('1em "MyCustomFont"') ?? Promise.resolve();
+  }
+
+  if (type === "video") {
+    return fetch(src).then((response) => {
+      if (!response.ok) throw new Error(`Unable to preload ${src}`);
+      return response.blob();
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.decoding = "async";
+    image.onload = () => resolve();
+    image.onerror = reject;
+    image.src = src;
+  });
+}
+
 export default function DenmuHeroAnimation() {
   const [isFontLoaded, setIsFontLoaded] = useState(false);
+  const [areAssetsLoaded, setAreAssetsLoaded] = useState(false);
+  const [assetProgress, setAssetProgress] = useState(0);
   const [phase, setPhase] = useState("entrance"); // entrance -> grid -> loading -> headerMove -> pageReady
   const [loadProgress, setLoadProgress] = useState(0);
   const [portalCoords, setPortalCoords] = useState({ x: 50, y: 50 });
@@ -308,6 +350,30 @@ export default function DenmuHeroAnimation() {
     }
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    let completed = 0;
+    const total = preloadAssets.length;
+
+    const markComplete = () => {
+      completed += 1;
+      if (cancelled) return;
+
+      setAssetProgress(Math.round((completed / total) * 100));
+      if (completed === total) setAreAssetsLoaded(true);
+    };
+
+    preloadAssets.forEach((asset) => {
+      preloadAsset(asset)
+        .catch(() => undefined)
+        .finally(markComplete);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleLetterRevealComplete = async () => {
     const textElement = document.getElementById("intro-text-wrapper");
     if (!textElement) return;
@@ -342,11 +408,13 @@ export default function DenmuHeroAnimation() {
     }
   }, [phase]);
 
-  if (!isFontLoaded) {
+  if (!isFontLoaded || !areAssetsLoaded) {
     return (
       <div className="font-preloader">
         <div className="font-preloader-spinner" />
-        <span className="font-preloader-text">LOADING ASSETS...</span>
+        <span className="font-preloader-text">
+          LOADING ASSETS... {assetProgress}%
+        </span>
       </div>
     );
   }

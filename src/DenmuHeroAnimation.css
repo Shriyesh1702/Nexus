@@ -737,17 +737,17 @@ body {
     0 1.4rem 2.5rem rgba(0, 0, 0, 0.5),
     0 0 2.5rem var(--rail-glow),
     inset 0 1px 0 rgba(255, 255, 255, 0.22);
-  transform: scale(1.14) translateZ(2.5rem);
+  transform: scale(1.32) translateZ(2.5rem);
 }
 
 /* Counter the rail's tilt on only the focused card, while moving it inward
    so the enlarged edge stays within the viewport. */
 .arena-image-rail--left .arena-image-rail__card.is-hovered {
-  transform: translateX(13%) rotateY(-12deg) scale(1.14) translateZ(2.5rem);
+  transform: translateX(25%) rotateY(-12deg) scale(1.32) translateZ(2.5rem);
 }
 
 .arena-image-rail--right .arena-image-rail__card.is-hovered {
-  transform: translateX(-13%) rotateY(12deg) scale(1.14) translateZ(2.5rem);
+  transform: translateX(-25%) rotateY(12deg) scale(1.32) translateZ(2.5rem);
 }
 
 .arena-image-rail__card.is-hovered img {
