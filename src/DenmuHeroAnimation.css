@@ -440,6 +440,7 @@ body {
   padding: 0 clamp(1.25rem, 3.5vw, 3rem);
   z-index: 2;
   position: relative;
+  animation: nexus-mark-pulse 4.5s ease-in-out infinite;
 }
 
 .final-topbar .hero-nexus-title {
@@ -469,9 +470,35 @@ body {
     text-shadow 0.2s ease;
 }
 
+.topbar-links a::after {
+  content: "";
+  display: block;
+  height: 1px;
+  margin-top: 0.35rem;
+  background: currentColor;
+  box-shadow: 0 0 0.45rem currentColor;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 220ms ease;
+}
+
 .topbar-links a:hover {
   color: #ff007f;
   text-shadow: 0 0 12px rgba(255, 0, 127, 0.7);
+}
+
+.topbar-links a:hover::after {
+  transform: scaleX(1);
+}
+
+@keyframes nexus-mark-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba(191, 0, 255, 0));
+  }
+  50% {
+    filter: drop-shadow(0 0 1rem rgba(238, 48, 255, 0.56));
+  }
 }
 
 .topbar-links-left {
@@ -503,31 +530,254 @@ body {
   color: #bf00ff;
   position: relative;
   isolation: isolate;
-  overflow: hidden;
+  overflow: visible;
 }
 
-.final-driftwall-background {
+.arena-ambient {
   position: absolute;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
   pointer-events: none;
-  opacity: 0.9;
+  background: #000;
 }
 
-.final-driftwall-background::after {
+.arena-ambient::before {
+  content: none;
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  width: min(54vw, 42rem);
+  aspect-ratio: 1;
+  border: 1px solid rgba(224, 176, 255, 0.13);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 4rem rgba(191, 0, 255, 0.14),
+    0 0 4rem rgba(255, 0, 127, 0.08);
+  transform: translate(-50%, -50%) rotateX(68deg);
+  transform-style: preserve-3d;
+  animation: arena-halo-breathe 7s ease-in-out infinite;
+}
+
+.arena-ambient::after {
+  content: none;
+  position: absolute;
+  left: -15%;
+  right: -15%;
+  bottom: -26%;
+  height: 58%;
+  opacity: 0.34;
+  transform: perspective(780px) rotateX(64deg);
+  transform-origin: bottom center;
+  background-image:
+    linear-gradient(rgba(224, 176, 255, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 0, 127, 0.18) 1px, transparent 1px);
+  background-size: 3rem 3rem;
+  box-shadow: 0 -1rem 3rem rgba(191, 0, 255, 0.14);
+  animation: arena-grid-flow 9s linear infinite;
+}
+
+@keyframes arena-ambient-drift {
+  from {
+    filter: hue-rotate(0deg) brightness(0.85);
+    transform: scale(1);
+  }
+  to {
+    filter: hue-rotate(18deg) brightness(1.18);
+    transform: scale(1.06);
+  }
+}
+
+@keyframes arena-grid-flow {
+  from { background-position: 0 0; }
+  to { background-position: 0 3rem; }
+}
+
+@keyframes arena-halo-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    opacity: 0.9;
+    filter: hue-rotate(24deg);
+  }
+}
+
+.final-arena-background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: visible;
+  perspective: 1200px;
+  pointer-events: none;
+}
+
+/* Hide cards as they scroll above the rail start, which lines up with the
+   navbar's lower edge. An overlay keeps the vertical limit without clipping
+   a hovered card horizontally. */
+.final-arena-background::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: calc(clamp(6.5rem, 13vh, 9rem) + 3rem);
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 calc(100% - 3rem),
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.arena-image-rail {
+  position: absolute;
+  /* Keep the rail's viewport bounds, while allowing a hovered card to grow past its edge. */
+  top: clamp(6.5rem, 13vh, 9rem);
+  bottom: -12%;
+  width: clamp(8.5rem, 21vw, 18rem);
+  overflow: visible;
+  z-index: 0;
+  opacity: 1;
+  transform-style: preserve-3d;
+  will-change: transform;
+  pointer-events: auto;
+}
+
+.arena-image-rail--left {
+  left: clamp(0.5rem, 1.5vw, 1.5rem);
+  transform: rotateY(15deg);
+  transform-origin: left center;
+}
+
+.arena-image-rail--right {
+  right: clamp(0.5rem, 1.5vw, 1.5rem);
+  transform: rotateY(-15deg);
+  transform-origin: right center;
+}
+
+.arena-image-rail__track {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 1.5vw, 1.4rem);
+  animation: arena-images-rise 81s linear infinite;
+  transform: translate3d(0, 0, 0);
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+.arena-image-rail--right .arena-image-rail__track {
+  /* One empty slot apart, so a right image follows each left image. */
+  animation-delay: -5.0625s;
+}
+
+.arena-image-rail__card,
+.arena-image-rail__blank {
+  width: 100%;
+  aspect-ratio: 1.35;
+  display: block;
+}
+
+.arena-image-rail__card {
+  position: relative;
+  z-index: 0;
+  border: 1px solid rgba(224, 176, 255, 0.3);
+  border-radius: 0.7rem;
+  overflow: hidden;
+  background: linear-gradient(135deg, #13061c, #070707 55%, #13061c);
+  box-shadow:
+    0 0.8rem 1.5rem rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateZ(0);
+  transform-origin: center;
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.arena-image-rail__card img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  object-fit: contain;
+  opacity: 0.22;
+  filter: grayscale(1) contrast(1.15);
+  transform: translateZ(0);
+  transition: filter 280ms ease, opacity 280ms ease;
+}
+
+.arena-image-rail__card::after {
   content: "";
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(183, 0, 255, 0.24), transparent 36%),
-    linear-gradient(180deg, rgba(2, 0, 8, 0.12) 0%, rgba(2, 0, 8, 0.58) 60%, #020007 100%);
+  border-radius: inherit;
   pointer-events: none;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.12), transparent 22%, transparent 70%, rgba(191, 0, 255, 0.16));
+  opacity: 0.45;
+  transition: opacity 280ms ease;
+}
+
+.final-arena-background.is-rail-hovered .arena-image-rail__track {
+  animation-play-state: paused;
+}
+
+.arena-image-rail__card.is-hovered {
+  z-index: 1;
+  box-shadow:
+    0 1.4rem 2.5rem rgba(0, 0, 0, 0.5),
+    0 0 2.5rem rgba(191, 0, 255, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transform: scale(1.14) translateZ(2.5rem);
+}
+
+/* Expand side-rail cards toward the center of the viewport so their outer
+   edges stay within the page rather than being clipped at the screen edge. */
+.arena-image-rail--left .arena-image-rail__card.is-hovered {
+  transform: translateX(10%) scale(1.14) translateZ(2.5rem);
+}
+
+.arena-image-rail--right .arena-image-rail__card.is-hovered {
+  transform: translateX(-10%) scale(1.14) translateZ(2.5rem);
+}
+
+.arena-image-rail__card.is-hovered img {
+  opacity: 1;
+  filter: grayscale(0) contrast(1);
+}
+
+.arena-image-rail__card.is-hovered::after {
+  opacity: 0.8;
+}
+
+@keyframes arena-images-rise {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, calc(-50% - clamp(0.375rem, 0.75vw, 0.7rem)), 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arena-image-rail__track,
+  .arena-ambient,
+  .arena-ambient::before,
+  .arena-ambient::after,
+  .final-topbar .final-nexus-mark {
+    animation: none;
+  }
 }
 
 .final-navbar-shell {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   width: 100%;
+  padding-bottom: 0.75rem;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.74), transparent);
+  border-bottom: 1px solid rgba(224, 176, 255, 0.08);
+  backdrop-filter: blur(5px);
 }
 
 .inverted-theme-wrapper.mode-dark .next-page-title {

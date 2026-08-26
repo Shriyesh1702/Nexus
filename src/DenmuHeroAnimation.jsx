@@ -7,7 +7,6 @@ import IntroSequence from "./components/IntroSequence";
 import HeroHeader from "./components/HeroHeader";
 import FinalNavbar from "./components/FinalNavbar";
 import PortalOverlay from "./components/PortalOverlay";
-import DriftWall from "./components/DriftWall";
 import "./DenmuHeroAnimation.css";
 
 const hyperspeedOptions = {
@@ -46,11 +45,18 @@ const hyperspeedOptions = {
   },
 };
 
+const arenaImages = [1015, 1025, 1039, 1043, 1044, 1050, 1062, 1069].map(
+  (id) => `https://picsum.photos/id/${id}/720/520`,
+);
+const arenaImageSequence = arenaImages.flatMap((image) => [image, null]);
+
 export default function DenmuHeroAnimation() {
   const [isFontLoaded, setIsFontLoaded] = useState(false);
   const [phase, setPhase] = useState("entrance"); // entrance -> grid -> loading -> headerMove -> pageReady
   const [loadProgress, setLoadProgress] = useState(0);
   const [portalCoords, setPortalCoords] = useState({ x: 50, y: 50 });
+  const [imageRailsPaused, setImageRailsPaused] = useState(false);
+  const [hoveredRailImage, setHoveredRailImage] = useState(null);
 
   const portalOriginRef = useRef(null);
   const lenisRef = useRef(null);
@@ -147,6 +153,7 @@ export default function DenmuHeroAnimation() {
   const navPointer = useTransform(navReveal, (v) =>
     v > 0.55 ? "auto" : "none",
   );
+  const railsOpacity = useTransform(navReveal, [0.85, 1], [0, 1]);
 
   // Lenis & Event Handlers setup
   useEffect(() => {
@@ -362,31 +369,61 @@ export default function DenmuHeroAnimation() {
         >
           <div className="inverted-theme-wrapper mode-dark">
             <div className="next-page-layout">
+              <div className="arena-ambient" aria-hidden="true" />
               <motion.div
-                className="final-driftwall-background"
-                initial={{ opacity: 0, scale: 1.04 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{
-                  duration: 1.25,
-                  delay: 0.45,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                aria-hidden="true"
+                className={`final-arena-background${imageRailsPaused ? " is-rail-hovered" : ""}`}
+                style={{ opacity: railsOpacity }}
               >
-                <DriftWall
-                  columns={10}
-                  tileWidth={520}
-                  tileHeight={146}
-                  gap={16}
-                  speed={28}
-                  tilt={12}
-                  turn={-10}
-                  depth={180}
-                  dim={0.38}
-                  fade={0.45}
-                  parallax={0}
-                  overlayColor="#13031f"
-                />
+                <div
+                  className="arena-image-rail arena-image-rail--left"
+                  onPointerEnter={() => setImageRailsPaused(true)}
+                  onPointerLeave={() => {
+                    setImageRailsPaused(false);
+                    setHoveredRailImage(null);
+                  }}
+                >
+                  <div className="arena-image-rail__track">
+                    {[...arenaImageSequence, ...arenaImageSequence].map((image, index) => (
+                      image ? (
+                        <span
+                          key={`left-${index}`}
+                          className={`arena-image-rail__card${hoveredRailImage === `left-${index}` ? " is-hovered" : ""}`}
+                          onPointerEnter={() => setHoveredRailImage(`left-${index}`)}
+                          onPointerLeave={() => setHoveredRailImage(null)}
+                        >
+                          <img src={image} alt="" />
+                        </span>
+                      ) : (
+                        <span key={`left-blank-${index}`} className="arena-image-rail__blank" />
+                      )
+                    ))}
+                  </div>
+                </div>
+                <div
+                  className="arena-image-rail arena-image-rail--right"
+                  onPointerEnter={() => setImageRailsPaused(true)}
+                  onPointerLeave={() => {
+                    setImageRailsPaused(false);
+                    setHoveredRailImage(null);
+                  }}
+                >
+                  <div className="arena-image-rail__track">
+                    {[...arenaImageSequence, ...arenaImageSequence].map((image, index) => (
+                      image ? (
+                        <span
+                          key={`right-${index}`}
+                          className={`arena-image-rail__card${hoveredRailImage === `right-${index}` ? " is-hovered" : ""}`}
+                          onPointerEnter={() => setHoveredRailImage(`right-${index}`)}
+                          onPointerLeave={() => setHoveredRailImage(null)}
+                        >
+                          <img src={image} alt="" />
+                        </span>
+                      ) : (
+                        <span key={`right-blank-${index}`} className="arena-image-rail__blank" />
+                      )
+                    ))}
+                  </div>
+                </div>
               </motion.div>
               <div className="final-navbar-shell">
                 <FinalNavbar

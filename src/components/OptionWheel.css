@@ -1,0 +1,111 @@
+.option-wheel {
+  --ow-text-color: #a6a6a6;
+  --ow-active-color: #ffffff;
+  --ow-font-size: 3rem;
+  --ow-inset: 80px;
+
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  outline: none;
+}
+
+.option-wheel--dragging {
+  cursor: grabbing;
+}
+
+/* Each option is absolutely centered, then offset along the curve by the
+   rAF loop through transform/opacity/filter, so everything stays in step. */
+.option-wheel__item {
+  position: absolute;
+  top: 50%;
+  left: var(--ow-inset);
+  white-space: nowrap;
+  font-size: var(--ow-font-size);
+  line-height: 1;
+  font-weight: 200;
+  transform-origin: left center;
+  cursor: pointer;
+  will-change: transform, opacity, filter;
+  /* --ow-p goes 0 -> 1 as an option approaches the middle of the wheel */
+  color: color-mix(in srgb, var(--ow-active-color) calc(var(--ow-p, 0) * 100%), var(--ow-text-color));
+}
+
+.option-wheel--right .option-wheel__item {
+  left: auto;
+  right: var(--ow-inset);
+  transform-origin: right center;
+}
+
+.option-wheel__item--selected {
+  font-weight: 500;
+}
+
+/* Image wheels retain the curved wheel movement, but treat every option as a
+   small gallery card instead of a text label. */
+.option-wheel--images {
+  overflow: visible;
+  cursor: default;
+}
+
+.option-wheel--images .option-wheel__item {
+  width: clamp(10rem, 24vw, 22rem);
+  aspect-ratio: 1.24;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.9rem;
+  background: #111;
+  box-shadow: 0 1rem 2.4rem rgba(0, 0, 0, 0.58);
+  transition: filter 260ms ease, transform 260ms ease, border-color 260ms ease, box-shadow 260ms ease;
+}
+
+.option-wheel--images .option-wheel__item img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  filter: grayscale(1) contrast(0.92) brightness(0.7);
+  transition: filter 260ms ease, transform 260ms ease;
+}
+
+.option-wheel--images .option-wheel__item:hover,
+.option-wheel--images .option-wheel__item:focus-visible {
+  z-index: 5;
+  border-color: rgba(255, 0, 127, 0.85);
+  box-shadow: 0 1.1rem 2.75rem rgba(255, 0, 127, 0.22);
+}
+
+.option-wheel--images .option-wheel__item:hover img,
+.option-wheel--images .option-wheel__item:focus-visible img {
+  filter: grayscale(0) contrast(1) brightness(1);
+  transform: scale(1.1);
+}
+
+.option-wheel__image-label {
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.45rem;
+  left: 0.55rem;
+  overflow: hidden;
+  color: #fff;
+  font-family: sans-serif;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-align: left;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  text-shadow: 0 1px 7px #000;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .option-wheel--images .option-wheel__item,
+  .option-wheel--images .option-wheel__item img {
+    transition: none;
+  }
+}
