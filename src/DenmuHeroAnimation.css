@@ -324,10 +324,9 @@ body {
 ========================================== */
 .portal-overlay-container {
   position: fixed;
-  top: -5vh;
-  left: -5vw;
-  width: 110vw;
-  height: 110vh;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
   pointer-events: none;
   border: none;
   outline: none;
@@ -345,12 +344,19 @@ body {
   width: 100%;
   height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem 4rem 1.5rem;
   background-color: #000000;
   color: #ffffff;
   text-align: center;
   border: none;
+}
+
+.portal-nexus-locked {
+  transform: scale(1.25);
+  transform-origin: center center;
 }
 
 .next-page-title {
@@ -402,6 +408,14 @@ body {
   color: #000000;
 }
 
+.inverted-theme-wrapper.mode-light .hero-nexus-title {
+  color: #000000;
+}
+
+.inverted-theme-wrapper.mode-dark .hero-nexus-title {
+  color: #ffffff;
+}
+
 .inverted-theme-wrapper.mode-light .inverted-btn {
   background-color: #000000;
   color: #ffffff;
@@ -409,7 +423,7 @@ body {
 
 /* PORTAL 2 DARK NEON STYLING */
 .inverted-theme-wrapper.mode-dark .next-page-layout {
-  background-color: #05020a;
+  background-color: #000000;
   color: #bf00ff;
 }
 .inverted-theme-wrapper.mode-dark .next-page-title {
@@ -431,8 +445,10 @@ body {
   width: 100%;
   height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem 4rem 1.5rem;
   text-align: center;
 }
 

@@ -429,10 +429,13 @@ export default function DenmuHeroAnimation() {
         >
           <div className="inverted-theme-wrapper mode-light">
             <div className="next-page-layout">
-              <section className="next-page-hero">
-                <h1 className="next-page-title">NEXUS KILUB</h1>
-                <p className="next-page-description">hehe.</p>
-              </section>
+              <header className="hero-header-wrapper">
+                <div className="title-trail-container">
+                  <div className="centered-header-title-wrapper main-title portal-nexus-locked">
+                    <h1 className="hero-nexus-title">{introText}</h1>
+                  </div>
+                </div>
+              </header>
             </div>
           </div>
         </motion.div>
@@ -449,10 +452,13 @@ export default function DenmuHeroAnimation() {
         >
           <div className="inverted-theme-wrapper mode-dark">
             <div className="next-page-layout">
-              <section className="next-page-hero">
-                <h1 className="next-page-title">NEXUS KILUB</h1>
-                <p className="next-page-description">hehe</p>
-              </section>
+              <header className="hero-header-wrapper">
+                <div className="title-trail-container">
+                  <div className="centered-header-title-wrapper main-title portal-nexus-locked">
+                    <h1 className="hero-nexus-title">{introText}</h1>
+                  </div>
+                </div>
+              </header>
             </div>
           </div>
         </motion.div>
