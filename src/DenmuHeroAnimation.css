@@ -683,23 +683,32 @@ body {
 }
 
 .arena-image-rail__card {
-  --rail-glow: rgba(191, 0, 255, 0.28);
+  --rail-glow-top: rgba(224, 176, 255, 0.34);
+  --rail-glow-right: rgba(0, 214, 255, 0.32);
+  --rail-glow-bottom: rgba(191, 0, 255, 0.34);
+  --rail-glow-left: rgba(255, 0, 127, 0.32);
   position: relative;
   z-index: 0;
-  border: 1px solid rgba(224, 176, 255, 0.3);
-  border-radius: 0.7rem;
+  border: 1px solid transparent;
+  border-radius: 0.85rem;
   overflow: hidden;
-  background: linear-gradient(135deg, #13061c, #070707 55%, #13061c);
+  background:
+    linear-gradient(135deg, #16071f, #070707 55%, #100516) padding-box,
+    linear-gradient(180deg, var(--rail-glow-top), var(--rail-glow-right) 28%, var(--rail-glow-bottom) 62%, var(--rail-glow-left)) border-box;
   box-shadow:
-    0 0.8rem 1.5rem rgba(0, 0, 0, 0.38),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 0.9rem 1.8rem rgba(0, 0, 0, 0.46),
+    0 0.15rem 0.5rem rgba(191, 0, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1.4rem 1.8rem rgba(0, 0, 0, 0.36);
   transform: translateZ(0);
   transform-origin: center;
-  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 280ms ease;
 }
 
 .arena-image-rail__card img,
 .arena-image-rail__card video {
+  position: relative;
+  z-index: 0;
   width: 100%;
   height: 100%;
   display: block;
@@ -711,20 +720,39 @@ body {
   transition: filter 280ms ease, opacity 280ms ease;
 }
 
+.arena-image-rail__card video {
+  object-fit: cover;
+}
+
 .arena-image-rail__card .arena-image-rail__video {
   position: absolute;
   inset: 0;
   z-index: 1;
 }
 
+.arena-image-rail__card::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0.3rem;
+  border: 1px solid rgba(255, 238, 255, 0.23);
+  border-radius: 0.56rem;
+  box-shadow: inset 0 0 0.9rem rgba(191, 0, 255, 0.1);
+  pointer-events: none;
+  transition: inset 280ms ease, border-color 280ms ease, box-shadow 280ms ease;
+}
+
 .arena-image-rail__card::after {
   content: "";
   position: absolute;
+  z-index: 3;
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: linear-gradient(115deg, rgba(255, 255, 255, 0.12), transparent 22%, transparent 70%, rgba(191, 0, 255, 0.16));
-  opacity: 0.45;
+  background:
+    linear-gradient(to top, rgba(4, 0, 9, 0.45), transparent 38%),
+    linear-gradient(115deg, rgba(255, 255, 255, 0.16), transparent 22%, transparent 70%, rgba(191, 0, 255, 0.2));
+  opacity: 0.6;
   transition: opacity 280ms ease;
 }
 
@@ -736,8 +764,12 @@ body {
   z-index: 1;
   box-shadow:
     0 1.4rem 2.5rem rgba(0, 0, 0, 0.5),
-    0 0 2.5rem var(--rail-glow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    0 -0.65rem 1.8rem var(--rail-glow-top),
+    0.65rem 0 1.8rem var(--rail-glow-right),
+    0 0.65rem 1.8rem var(--rail-glow-bottom),
+    -0.65rem 0 1.8rem var(--rail-glow-left),
+    0 0 0.9rem rgba(255, 211, 255, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
   transform: scale(1.32) translateZ(2.5rem);
 }
 
@@ -754,11 +786,17 @@ body {
 .arena-image-rail__card.is-hovered img,
 .arena-image-rail__card.is-hovered video {
   opacity: 1;
-  filter: grayscale(0) contrast(1);
+  filter: grayscale(0) saturate(1.1) contrast(1.04);
+}
+
+.arena-image-rail__card.is-hovered::before {
+  inset: 0.18rem;
+  border-color: rgba(255, 238, 255, 0.58);
+  box-shadow: inset 0 0 1.1rem rgba(191, 0, 255, 0.28);
 }
 
 .arena-image-rail__card.is-hovered::after {
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
 @keyframes arena-images-rise {

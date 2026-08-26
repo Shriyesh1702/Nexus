@@ -52,10 +52,10 @@ const arenaGifs = [
   "yoru",
   "mlbb1",
   "mlbb2",
-  "viper",
+  "pubg1",
   "yoru",
   "mlbb1",
-  "mlbb2",
+  "viper",
 ].map((name) => ({
   poster: `/arena-gifs/${name}.jpg`,
   video: `/arena-gifs/${name}.webm`,
@@ -69,10 +69,6 @@ const preloadAssets = [
     src: new URL("./assets/chrome-sprite-2x.png", import.meta.url).href,
   },
   { type: "image", src: new URL("./assets/dino.png", import.meta.url).href },
-  {
-    type: "video",
-    src: new URL("./assets/videos/back.mp4", import.meta.url).href,
-  },
   ...new Map(
     arenaGifs.map((media) => [
       media.poster,
@@ -131,36 +127,48 @@ export default function DenmuHeroAnimation() {
 
       context.drawImage(imageElement, 0, 0, sampleSize, sampleSize);
       const { data } = context.getImageData(0, 0, sampleSize, sampleSize);
-      let red = 0;
-      let green = 0;
-      let blue = 0;
-      let weight = 0;
+      const edges = {
+        top: { red: 0, green: 0, blue: 0, weight: 0 },
+        right: { red: 0, green: 0, blue: 0, weight: 0 },
+        bottom: { red: 0, green: 0, blue: 0, weight: 0 },
+        left: { red: 0, green: 0, blue: 0, weight: 0 },
+      };
+
+      const sampleEdge = (edge, pixel, alpha) => {
+        edge.red += data[pixel] * alpha;
+        edge.green += data[pixel + 1] * alpha;
+        edge.blue += data[pixel + 2] * alpha;
+        edge.weight += alpha;
+      };
 
       for (let y = 0; y < sampleSize; y += 1) {
         for (let x = 0; x < sampleSize; x += 1) {
-          if (
-            x >= edgeDepth &&
-            x < sampleSize - edgeDepth &&
-            y >= edgeDepth &&
-            y < sampleSize - edgeDepth
-          )
-            continue;
-
           const pixel = (y * sampleSize + x) * 4;
           const alpha = data[pixel + 3] / 255;
-          red += data[pixel] * alpha;
-          green += data[pixel + 1] * alpha;
-          blue += data[pixel + 2] * alpha;
-          weight += alpha;
+          if (y < edgeDepth) sampleEdge(edges.top, pixel, alpha);
+          if (x >= sampleSize - edgeDepth)
+            sampleEdge(edges.right, pixel, alpha);
+          if (y >= sampleSize - edgeDepth)
+            sampleEdge(edges.bottom, pixel, alpha);
+          if (x < edgeDepth) sampleEdge(edges.left, pixel, alpha);
         }
       }
 
-      if (!weight) return;
+      const toGlow = ({ red, green, blue, weight }) =>
+        weight
+          ? `rgba(${Math.round(red / weight)}, ${Math.round(green / weight)}, ${Math.round(blue / weight)}, 0.62)`
+          : "rgba(191, 0, 255, 0.28)";
 
-      const glow = `rgba(${Math.round(red / weight)}, ${Math.round(green / weight)}, ${Math.round(blue / weight)}, 0.62)`;
-      setRailImageColors((colors) =>
-        colors[imageSrc] === glow ? colors : { ...colors, [imageSrc]: glow },
+      const glow = Object.fromEntries(
+        Object.entries(edges).map(([edge, values]) => [edge, toGlow(values)]),
       );
+      setRailImageColors((colors) => {
+        const existing = colors[imageSrc];
+        return existing &&
+          Object.keys(glow).every((edge) => existing[edge] === glow[edge])
+          ? colors
+          : { ...colors, [imageSrc]: glow };
+      });
     } catch {
       // Keep the CSS fallback glow when a cross-origin image cannot be sampled.
     }
@@ -529,7 +537,14 @@ export default function DenmuHeroAnimation() {
                             key={cardId}
                             className={`arena-image-rail__card${isHovered ? " is-hovered" : ""}`}
                             style={{
-                              "--rail-glow": railImageColors[media.poster],
+                              "--rail-glow-top":
+                                railImageColors[media.poster]?.top,
+                              "--rail-glow-right":
+                                railImageColors[media.poster]?.right,
+                              "--rail-glow-bottom":
+                                railImageColors[media.poster]?.bottom,
+                              "--rail-glow-left":
+                                railImageColors[media.poster]?.left,
                             }}
                             onPointerEnter={() => setHoveredRailImage(cardId)}
                             onPointerLeave={() => setHoveredRailImage(null)}
@@ -589,7 +604,14 @@ export default function DenmuHeroAnimation() {
                             key={cardId}
                             className={`arena-image-rail__card${isHovered ? " is-hovered" : ""}`}
                             style={{
-                              "--rail-glow": railImageColors[media.poster],
+                              "--rail-glow-top":
+                                railImageColors[media.poster]?.top,
+                              "--rail-glow-right":
+                                railImageColors[media.poster]?.right,
+                              "--rail-glow-bottom":
+                                railImageColors[media.poster]?.bottom,
+                              "--rail-glow-left":
+                                railImageColors[media.poster]?.left,
                             }}
                             onPointerEnter={() => setHoveredRailImage(cardId)}
                             onPointerLeave={() => setHoveredRailImage(null)}
