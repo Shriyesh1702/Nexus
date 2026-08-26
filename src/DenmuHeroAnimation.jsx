@@ -50,12 +50,12 @@ const hyperspeedOptions = {
 const arenaGifs = [
   "viper",
   "yoru",
+  "mlbb1",
+  "mlbb2",
   "viper",
   "yoru",
-  "viper",
-  "yoru",
-  "viper",
-  "yoru",
+  "mlbb1",
+  "mlbb2",
 ].map((name) => ({
   poster: `/arena-gifs/${name}.jpg`,
   video: `/arena-gifs/${name}.webm`,
