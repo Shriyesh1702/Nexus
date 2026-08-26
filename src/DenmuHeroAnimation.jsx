@@ -61,6 +61,9 @@ const arenaGifs = [
   video: `/arena-gifs/${name}.webm`,
 }));
 const arenaImageSequence = arenaGifs.flatMap((media) => [media, null]);
+const reversedArenaImageSequence = [...arenaGifs]
+  .reverse()
+  .flatMap((media) => [media, null]);
 
 const preloadAssets = [
   { type: "font", src: new URL("./assets/MyFont.otf", import.meta.url).href },
@@ -587,7 +590,10 @@ export default function DenmuHeroAnimation() {
                   }}
                 >
                   <div className="arena-image-rail__track">
-                    {[...arenaImageSequence, ...arenaImageSequence].map(
+                    {[
+                      ...reversedArenaImageSequence,
+                      ...reversedArenaImageSequence,
+                    ].map(
                       (media, index) => {
                         if (!media)
                           return (
