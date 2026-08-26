@@ -122,7 +122,7 @@ export default function DenmuHeroAnimation() {
     const handleWheel = (e) => {
       e.preventDefault();
       const delta = e.deltaY;
-      progressVal += delta / 1800; // Tighter sensitivity calibrated for 2 waves
+      progressVal += delta / 600; // Tighter sensitivity calibrated for 2 waves
       progressVal = Math.max(0, Math.min(1, progressVal));
       rawScrollProgress.set(progressVal);
     };
@@ -137,11 +137,16 @@ export default function DenmuHeroAnimation() {
       const deltaY = startY - currentY;
       startY = currentY;
 
-      progressVal += deltaY / 1000;
+      // Check if device is mobile (width <= 768px)
+      const isMobile = window.innerWidth <= 768;
+
+      // Reduced from 400 down to 150 for mobile (~2.5x faster swipe response)
+      const touchSensitivity = isMobile ? 150 : 400;
+
+      progressVal += deltaY / touchSensitivity;
       progressVal = Math.max(0, Math.min(1, progressVal));
       rawScrollProgress.set(progressVal);
     };
-
     window.addEventListener("wheel", handleWheel, { passive: false });
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
     window.addEventListener("touchmove", handleTouchMove, { passive: true });
